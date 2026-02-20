@@ -81,7 +81,7 @@ irm https://claude.ai/install.ps1 | iex
 
 ---
 
-### 3단계: 터미널 다시 열기 + 작업 폴더 만들기
+### 3단계: 터미널 다시 열기 + 플레이북 다운로드
 
 1단계와 같은 방법으로 터미널(또는 PowerShell)을 다시 열어주세요.
 
@@ -92,15 +92,16 @@ irm https://claude.ai/install.ps1 | iex
 
 **Mac의 경우:**
 ```
-mkdir -p ~/projects/Project_Playbook
+git clone https://github.com/vorovong/Project-Playbook.git ~/projects/Project_Playbook
 ```
 
 **Windows의 경우:**
 ```
-mkdir -Force "$HOME\projects\Project_Playbook"
+git clone https://github.com/vorovong/Project-Playbook.git "$HOME\projects\Project_Playbook"
 ```
 
-- 아무 반응이 없으면 **정상입니다.** 폴더가 조용히 만들어진 거예요.
+- 영어로 뭔가 몇 줄 나옵니다. **정상입니다.** 필요한 파일들이 다운로드되는 거예요.
+- 아무 에러 없이 끝나면 성공입니다.
 
 ---
 
