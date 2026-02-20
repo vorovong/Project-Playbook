@@ -59,9 +59,30 @@ API 키 같은 건 필요 없습니다.
 
 ---
 
-### 2단계: 클로드 코드 설치
+### 2단계: Git 설치
 
-아래를 그대로 복사해서 터미널(또는 PowerShell)에 붙여넣고 `Enter`를 누르세요:
+다음 단계에서 필요한 도구를 먼저 설치합니다. 아래를 복사해서 붙여넣고 `Enter`:
+
+**Mac의 경우:**
+```
+xcode-select --install
+```
+- 팝업 창이 뜹니다. **"설치"** 를 클릭하세요.
+- 설치에 몇 분 걸릴 수 있습니다. 끝날 때까지 기다려주세요.
+- "이미 설치되어 있습니다" 같은 메시지가 나오면 이미 된 거예요. 그냥 다음 단계로 넘어가세요.
+
+**Windows의 경우:**
+```
+winget install Git.Git
+```
+- 영어로 설치 과정이 나옵니다. 끝날 때까지 기다려주세요.
+- 설치가 끝나면 **PowerShell을 닫았다가 다시 열어주세요** (1단계와 같은 방법).
+
+---
+
+### 3단계: 클로드 코드 설치
+
+아래를 복사해서 붙여넣고 `Enter`:
 
 **Mac의 경우:**
 ```
@@ -75,53 +96,32 @@ irm https://claude.ai/install.ps1 | iex
 
 - 영어로 뭔가 주르륵 나옵니다. **정상입니다.** 설치가 진행되는 거예요.
 - 글자가 멈추고 더 이상 아무 일도 안 일어나면 설치가 끝난 겁니다.
-- 이제 **창을 닫아주세요.**
-  - Mac: `Cmd + Q` 또는 창 닫기
-  - Windows: 그냥 창 닫기
+- 이제 **창을 닫았다가 다시 열어주세요** (1단계와 같은 방법).
 
----
-
-### 3단계: 터미널 다시 열기 + 플레이북 다운로드
-
-1단계와 같은 방법으로 터미널(또는 PowerShell)을 다시 열어주세요.
-
-> 왜 닫았다 다시 여냐면: 방금 설치한 클로드 코드를 컴퓨터가 인식하려면
+> 왜 닫았다 다시 여냐면: 방금 설치한 것들을 컴퓨터가 인식하려면
 > 터미널을 새로 열어야 합니다. 한 번만 하면 됩니다.
 
-터미널이 열리면, 아래를 복사해서 붙여넣고 `Enter`:
+---
+
+### 4단계: 플레이북 다운로드 + 클로드 코드 실행
+
+이제 마지막입니다. 아래를 통째로 복사해서 붙여넣고 `Enter`:
 
 **Mac의 경우:**
 ```
-git clone https://github.com/vorovong/Project-Playbook.git ~/projects/Project_Playbook
+git clone https://github.com/vorovong/Project-Playbook.git ~/projects/Project_Playbook && cd ~/projects/Project_Playbook && claude
 ```
 
 **Windows의 경우:**
 ```
-git clone https://github.com/vorovong/Project-Playbook.git "$HOME\projects\Project_Playbook"
+git clone https://github.com/vorovong/Project-Playbook.git "$HOME\projects\Project_Playbook"; cd "$HOME\projects\Project_Playbook"; claude
 ```
 
-- 영어로 뭔가 몇 줄 나옵니다. **정상입니다.** 필요한 파일들이 다운로드되는 거예요.
-- 아무 에러 없이 끝나면 성공입니다.
+- 파일이 다운로드되고, 자동으로 클로드 코드가 시작됩니다.
 
 ---
 
-### 4단계: 클로드 코드 실행
-
-아래를 복사해서 붙여넣고 `Enter`:
-
-**Mac의 경우:**
-```
-cd ~/projects/Project_Playbook && claude
-```
-
-**Windows의 경우:**
-```
-cd "$HOME\projects\Project_Playbook"; claude
-```
-
----
-
-### 5단계: 처음 실행 — 로그인하기
+### 5단계: 처음 실행 — 로그인하기 (최초 1회만)
 
 처음 실행하면 몇 가지 질문이 나옵니다. 당황하지 마세요, 하나씩 안내합니다.
 
@@ -153,7 +153,7 @@ cd "$HOME\projects\Project_Playbook"; claude
 
 ---
 
-### 6단계: 완료!
+### 6단계: 완료! 🎉
 
 `>` 표시가 나오면 **설치 끝, 대화 준비 완료**입니다.
 
