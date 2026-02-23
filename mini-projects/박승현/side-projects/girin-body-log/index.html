@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIRIN BODY LOG</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== 프로필 설정 모달 (첫 방문 시) ===== -->
+  <div id="profile-modal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <h2>프로필 설정</h2>
+      <p class="modal-desc">처음 오셨군요! 기본 정보를 입력해주세요.<br>트레이너와 길드원이 참고할 수 있습니다.</p>
+
+      <div class="card">
+        <h3>기본 정보</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label>이름</label>
+            <input type="text" id="profile-name" placeholder="홍길동">
+          </div>
+          <div class="input-group">
+            <label>나이</label>
+            <input type="number" id="profile-age" placeholder="30">
+          </div>
+          <div class="input-group">
+            <label>키 (cm)</label>
+            <input type="number" id="profile-height" step="0.1" placeholder="175">
+          </div>
+          <div class="input-group">
+            <label>현재 체중 (kg)</label>
+            <input type="number" id="profile-weight" step="0.1" placeholder="75">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>건강 상태</h3>
+        <div class="input-stack">
+          <div class="input-group">
+            <label>현재 가지고 있는 질환 / 지병</label>
+            <textarea id="profile-conditions" placeholder="예: 허리디스크 (L4-L5), 고혈압 약 복용 중, 왼쪽 무릎 연골 손상 등&#10;없으면 '없음' 입력"></textarea>
+          </div>
+          <div class="input-group">
+            <label>가족력</label>
+            <textarea id="profile-family-history" placeholder="예: 부 — 고혈압, 당뇨 / 모 — 골다공증&#10;없으면 '없음' 입력"></textarea>
+          </div>
+          <div class="input-group">
+            <label>알레르기 / 주의사항</label>
+            <textarea id="profile-allergies" placeholder="예: 유당불내증, 아스피린 알레르기&#10;없으면 '없음' 입력"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>최근 메디컬 체크 결과 (선택)</h3>
+        <p class="card-hint">건강검진 수치가 있으면 입력해주세요. 없으면 건너뛰어도 됩니다.</p>
+        <div id="medical-fields">
+          <div class="medical-row">
+            <input type="text" placeholder="항목 (예: 혈압)" class="med-name">
+            <input type="text" placeholder="수치 (예: 130/85)" class="med-value">
+            <input type="text" placeholder="단위 (예: mmHg)" class="med-unit">
+          </div>
+          <div class="medical-row">
+            <input type="text" placeholder="항목 (예: 공복혈당)" class="med-name">
+            <input type="text" placeholder="수치 (예: 95)" class="med-value">
+            <input type="text" placeholder="단위 (예: mg/dL)" class="med-unit">
+          </div>
+          <div class="medical-row">
+            <input type="text" placeholder="항목 (예: 콜레스테롤)" class="med-name">
+            <input type="text" placeholder="수치 (예: 210)" class="med-value">
+            <input type="text" placeholder="단위 (예: mg/dL)" class="med-unit">
+          </div>
+        </div>
+        <button class="btn-secondary" id="add-medical-btn">+ 항목 추가</button>
+      </div>
+
+      <div class="card">
+        <h3>운동 경험</h3>
+        <div class="input-stack">
+          <div class="input-group">
+            <label>현재 운동 습관</label>
+            <textarea id="profile-exercise-history" placeholder="예: 주 2회 헬스, 가끔 등산&#10;운동 안 하면 '없음' 입력"></textarea>
+          </div>
+          <div class="input-group">
+            <label>부상 이력 / 운동 시 주의할 부위</label>
+            <textarea id="profile-injuries" placeholder="예: 2024년 왼쪽 발목 인대 손상, 오른쪽 어깨 회전근개 불편&#10;없으면 '없음' 입력"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="save-profile-btn">프로필 저장하고 시작하기</button>
+    </div>
+  </div>
+
+  <!-- ===== 메인 앱 ===== -->
+  <div id="app-container" style="display:none;">
+    <header>
+      <h1>GIRIN BODY LOG</h1>
+      <p class="subtitle">AI 빅웨이브를 넘기 위한 신체+정신 컨디션 트래커</p>
+      <div class="member-selector">
+        <button class="member-btn active" data-member="girin">기린 (박승현)</button>
+        <button class="member-btn" data-member="minho">김민호</button>
+        <button class="member-btn" data-member="seunghun">이승훈</button>
+      </div>
+    </header>
+
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="record">오늘 기록</button>
+      <button class="tab-btn" data-tab="dashboard">대시보드</button>
+      <button class="tab-btn" data-tab="routine">운동 루틴</button>
+      <button class="tab-btn" data-tab="trainer">PT 트레이너</button>
+      <button class="tab-btn" data-tab="profile">내 프로필</button>
+      <button class="tab-btn" data-tab="guild">길드 현황</button>
+    </nav>
+
+    <main>
+      <!-- ===== 오늘 기록 탭 ===== -->
+      <section id="tab-record" class="tab-content active">
+        <h2>오늘의 기록 <span id="today-date"></span></h2>
+
+        <div class="card">
+          <h3>신체 수치</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="weight">체중 (kg)</label>
+              <input type="number" id="weight" step="0.1" placeholder="75.0">
+            </div>
+            <div class="input-group">
+              <label for="body-fat">체지방률 (%)</label>
+              <input type="number" id="body-fat" step="0.1" placeholder="20.0">
+            </div>
+            <div class="input-group">
+              <label for="sleep-hours">수면 시간</label>
+              <input type="number" id="sleep-hours" step="0.5" min="0" max="24" placeholder="7.5">
+            </div>
+            <div class="input-group">
+              <label for="condition">컨디션 (1~10)</label>
+              <input type="range" id="condition" min="1" max="10" value="5">
+              <span id="condition-value" class="range-value">5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>운동 체크</h3>
+          <div class="routine-check">
+            <label class="check-item">
+              <input type="checkbox" id="morning-done">
+              <span class="check-label">아침 루틴 (10분)</span>
+              <span class="check-detail">스트레칭 → 스쿼트 → 팔굽혀펴기 → 플랭크</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="break-done">
+              <span class="check-label">포모도로 브레이크</span>
+              <span class="check-detail">목/어깨 → 스쿼트 → 손목 → 눈 운동</span>
+            </label>
+            <div class="break-count-row" id="break-count-row" style="display:none;">
+              <label>브레이크 횟수</label>
+              <input type="number" id="break-count" min="1" max="20" value="1">
+            </div>
+            <label class="check-item">
+              <input type="checkbox" id="evening-done">
+              <span class="check-label">저녁 루틴 (20분)</span>
+              <span class="check-detail">유산소 → 버피 → 마운틴클라이머 → 브릿지 → 스트레칭</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 스마트 운동 입력 -->
+        <div class="card">
+          <h3>운동 기록</h3>
+          <p class="card-hint">운동 이름을 입력하면 맞춤 수치 입력란이 나타납니다</p>
+          <div id="smart-exercises"></div>
+          <button class="btn-secondary" id="add-smart-exercise-btn">+ 운동 추가</button>
+        </div>
+
+        <div class="card">
+          <h3>오늘 한마디</h3>
+          <textarea id="daily-note" placeholder="오늘 컨디션, 느낀 점, 메모 등..."></textarea>
+        </div>
+
+        <button class="btn-primary" id="save-btn">저장하기</button>
+        <div id="save-message" class="save-message"></div>
+      </section>
+
+      <!-- ===== 대시보드 탭 ===== -->
+      <section id="tab-dashboard" class="tab-content">
+        <h2>내 대시보드</h2>
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-number" id="streak-count">0</div>
+            <div class="stat-label">연속 기록 (일)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="total-days">0</div>
+            <div class="stat-label">총 기록 일수</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="avg-condition">-</div>
+            <div class="stat-label">평균 컨디션</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="avg-sleep">-</div>
+            <div class="stat-label">평균 수면 (h)</div>
+          </div>
+        </div>
+        <div class="card"><h3>체중 추이</h3><div class="chart-container"><canvas id="weight-chart"></canvas></div></div>
+        <div class="card"><h3>컨디션 + 수면 추이</h3><div class="chart-container"><canvas id="condition-chart"></canvas></div></div>
+        <div class="card"><h3>운동 달성률 (최근 7일)</h3><div class="chart-container"><canvas id="routine-chart"></canvas></div></div>
+        <div class="card"><h3>최근 기록</h3><div id="recent-records"></div></div>
+      </section>
+
+      <!-- ===== 운동 루틴 탭 ===== -->
+      <section id="tab-routine" class="tab-content">
+        <h2>운동 루틴 가이드</h2>
+        <div class="card">
+          <h3>현재 주차: <span id="current-week">1~2주 적응기</span></h3>
+          <div class="week-progress"><div class="week-bar" id="week-bar" style="width: 12.5%"></div></div>
+          <p class="week-info" id="week-info">기본 횟수 유지. 습관 만들기에 집중하세요.</p>
+        </div>
+        <div class="card">
+          <h3>아침 기상 루틴 (10분)</h3>
+          <table class="routine-table">
+            <tr><th>순서</th><th>운동</th><th>횟수</th><th>효과</th></tr>
+            <tr><td>1</td><td>스트레칭 (전신)</td><td>3분</td><td>혈액순환</td></tr>
+            <tr><td>2</td><td>스쿼트</td><td>15회 × 2세트</td><td>하체 강화</td></tr>
+            <tr><td>3</td><td>팔굽혀펴기</td><td>10회 × 2세트</td><td>상체 근력</td></tr>
+            <tr><td>4</td><td>플랭크</td><td>30초 × 2세트</td><td>코어 안정성</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>포모도로 브레이크 (5분)</h3>
+          <table class="routine-table">
+            <tr><th>운동</th><th>시간</th><th>비고</th></tr>
+            <tr><td>목/어깨 스트레칭</td><td>1분</td><td>거북목 예방</td></tr>
+            <tr><td>의자 스쿼트/런지</td><td>10회</td><td>하체 혈류</td></tr>
+            <tr><td>손목 스트레칭</td><td>1분</td><td>타이핑 피로</td></tr>
+            <tr><td>눈 운동 (20-20-20)</td><td>1분</td><td>20초간 먼 곳 응시</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>저녁 루틴 (20분)</h3>
+          <table class="routine-table">
+            <tr><th>순서</th><th>운동</th><th>횟수</th><th>효과</th></tr>
+            <tr><td>1</td><td>가벼운 유산소</td><td>5분</td><td>심폐 기능</td></tr>
+            <tr><td>2</td><td>버피</td><td>8회 × 3세트</td><td>전신 운동</td></tr>
+            <tr><td>3</td><td>마운틴 클라이머</td><td>15회 × 2세트</td><td>코어+심폐</td></tr>
+            <tr><td>4</td><td>브릿지</td><td>15회 × 2세트</td><td>허리 건강</td></tr>
+            <tr><td>5</td><td>스트레칭</td><td>5분</td><td>근육 이완</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>8주 단계별 강도</h3>
+          <table class="routine-table">
+            <tr><th>주차</th><th>단계</th><th>조절</th></tr>
+            <tr><td>1~2주</td><td>적응기</td><td>기본 횟수. 습관 만들기</td></tr>
+            <tr><td>3~4주</td><td>성장기</td><td>횟수 +5, 플랭크 +15초</td></tr>
+            <tr><td>5~6주</td><td>강화기</td><td>세트 +1, 유산소 10분</td></tr>
+            <tr><td>7~8주</td><td>완성기</td><td>아침 15분 / 저녁 30분</td></tr>
+          </table>
+        </div>
+        <div class="card reminder">
+          <h3>주의사항</h3>
+          <ul>
+            <li>통증 시 즉시 중단</li>
+            <li>1시간에 물 한 잔</li>
+            <li>수면 최소 7시간</li>
+            <li>카페인 오후 2시 이후 자제</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===== PT 트레이너 탭 ===== -->
+      <section id="tab-trainer" class="tab-content">
+        <h2>PT 트레이너 노트</h2>
+
+        <div class="card">
+          <h3>멤버 선택</h3>
+          <div class="trainer-member-selector">
+            <button class="trainer-member-btn active" data-trainer-member="girin">기린</button>
+            <button class="trainer-member-btn" data-trainer-member="minho">김민호</button>
+            <button class="trainer-member-btn" data-trainer-member="seunghun">이승훈</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>멤버 프로필 요약</h3>
+          <div id="trainer-profile-summary" class="profile-summary-box">
+            <p class="text-dim">프로필을 불러오는 중...</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>오늘의 트레이닝 노트 <span id="trainer-date"></span></h3>
+          <div class="input-stack">
+            <div class="input-group">
+              <label>수행한 운동 내용</label>
+              <textarea id="trainer-workout-note" rows="5" placeholder="예:&#10;- 스쿼트 60kg × 10 × 3세트 (폼 교정: 무릎 안쪽 들어감 주의)&#10;- 데드리프트 80kg × 8 × 3세트&#10;- 런닝머신 30분 (페이스 6:30, 심박수 145~155)"></textarea>
+            </div>
+            <div class="input-group">
+              <label>컨디션 관찰</label>
+              <textarea id="trainer-condition-note" rows="3" placeholder="예: 왼쪽 무릎 약간 불편해함. 하체 운동 시 무게 줄이는 것 권장."></textarea>
+            </div>
+            <div class="input-group">
+              <label>다음 세션 계획 / 권장사항</label>
+              <textarea id="trainer-next-plan" rows="3" placeholder="예: 다음 주 상체 집중. 벤치프레스 도입. 유산소 시간 5분 늘리기."></textarea>
+            </div>
+          </div>
+          <button class="btn-primary" id="save-trainer-btn">트레이너 노트 저장</button>
+          <div id="trainer-save-message" class="save-message"></div>
+        </div>
+
+        <div class="card">
+          <h3>지난 노트 기록</h3>
+          <div id="trainer-history"></div>
+        </div>
+      </section>
+
+      <!-- ===== 내 프로필 탭 ===== -->
+      <section id="tab-profile" class="tab-content">
+        <h2>내 프로필</h2>
+        <div id="profile-view"></div>
+        <button class="btn-secondary" id="edit-profile-btn" style="margin-top:1rem;">프로필 수정</button>
+      </section>
+
+      <!-- ===== 길드 현황 탭 ===== -->
+      <section id="tab-guild" class="tab-content">
+        <h2>길드 현황</h2>
+        <div class="guild-grid" id="guild-grid"></div>
+        <div class="card"><h3>이번 주 랭킹</h3><div id="guild-ranking"></div></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>GIRIN BODY LOG — 폐관수련 2026</p>
+      <p class="footer-quote">"신체가 건강해야 정신이 버티고, 정신이 버텨야 BIG WAVE를 탄다."</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
