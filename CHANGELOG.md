@@ -1,30 +1,37 @@
-# Changelog
+# 변경 기록
 
-All notable changes to this project will be documented in this file.
+플레이북에 뭐가 바뀌었는지 기록하는 곳입니다.
+새로운 변경이 위에, 오래된 변경이 아래에 있습니다.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+---
 
-## [Unreleased]
+## 아직 반영 안 된 것
 
-## [2026-02-23]
+(다음 업데이트 예정 사항이 여기에 쌓입니다)
 
-### Added
+---
 
-- 폴더 구조 전면 개편: `docs/`, `mini-projects/`, `progress/` 3개 폴더로 정리
-- 팀 협업 가이드 (`docs/guides/팀-협업-가이드.md`)
-- 팀 다이제스트 템플릿 (`docs/templates/team-digest-template.md`)
-- 진행 기록 템플릿 파일명 규칙 도입 (`[번호]-[날짜]-[이름].md`)
-- mini-projects 멤버별 폴더 구조 도입 + 팀 대시보드
-- 김민호 미니 프로젝트 목록 (`mini-projects/김민호/projects.md`)
-- 박승현 GONGZONE FSM 마스터 프롬프트 시스템
-- 케이스 스터디: 코딩 제로에서 AI 뉴스 자동화까지
-- 플러그인 도입 가이드 (`docs/guides/phase3-플러그인-가이드.md`)
-- CLAUDE.md에 풀 프로젝트 전환 시 플러그인 소개 지침 추가
+## 2026-02-23
 
-## [2026-02-20]
+### 새로 생긴 것
 
-### Added
+- **파일 정리**: 흩어져 있던 파일들을 `docs/`, `mini-projects/`, `progress/` 세 폴더로 깔끔하게 정리
+- **팀 협업 가이드**: 함께 작업하는 방법을 정리한 문서 (`docs/guides/팀-협업-가이드.md`)
+- **주간 요약 양식**: 한 주간 뭘 했는지 정리하는 템플릿 (`docs/templates/team-digest-template.md`)
+- **진행 기록 이름 규칙**: 파일 이름에 번호와 날짜가 들어가서 순서대로 정렬됨 (예: `01-2026-02-23-회의-비서.md`)
+- **멤버별 폴더**: 미니 프로젝트와 진행 기록 모두 자기 이름 폴더 안에서 작업
+- **팀 대시보드**: 모든 멤버의 미니 프로젝트 현황을 한눈에 볼 수 있는 표 (`mini-projects/README.md`)
+- **김민호 미니 프로젝트 목록**: 회의 비서, AX 아카이빙, 텔레그램 봇 계획
+- **박승현 GONGZONE FSM**: 마스터 프롬프트 시스템 Day 1 진행 기록
+- **케이스 스터디**: "코딩 제로에서 AI 뉴스 자동화까지" 경험담
+- **플러그인 가이드**: 나중에 쓰게 될 클로드 코드 확장 기능 안내서 (`docs/guides/phase3-플러그인-가이드.md`)
 
-- 초기 커밋: 설치 가이드 (Mac/Windows), CLAUDE.md (교육 모드)
-- Git 설치 단계 추가
-- Windows 설치 가이드 보강
+---
+
+## 2026-02-20
+
+### 새로 생긴 것
+
+- **플레이북 시작**: 설치 가이드 (Mac/Windows), 클로드 코드 교육 모드 설정
+- **Git 설치 안내 추가**: 2단계에 Git 설치 과정 포함
+- **Windows 지원 강화**: Windows 사용자를 위한 설치 방법 보강
