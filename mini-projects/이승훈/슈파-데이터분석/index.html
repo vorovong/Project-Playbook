@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>슈파 - 식자재 공동구매 데이터 분석</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --primary-light: #FF8F5E;
+            --primary-dark: #E5541F;
+            --accent: #2EC4B6;
+            --accent-light: #4DD9CC;
+            --accent-dark: #1FA89B;
+            --bg: #FAFAF8;
+            --card: #FFFFFF;
+            --text: #2D3436;
+            --text-light: #636E72;
+            --text-muted: #B2BEC3;
+            --border: #E8E8E4;
+            --border-light: #F0F0EC;
+            --success: #00B894;
+            --warning: #FDCB6E;
+            --danger: #E17055;
+            --sidebar-w: 240px;
+            --header-h: 64px;
+        }
+        body {
+            font-family: -apple-system, 'Segoe UI', '맑은 고딕', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0; top: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+        }
+        .sidebar-brand {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .sidebar-brand h1 {
+            font-size: 22px;
+            color: var(--primary);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .sidebar-brand p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: all 0.2s;
+            margin-bottom: 4px;
+            user-select: none;
+        }
+        .nav-item:hover { background: var(--bg); color: var(--text); }
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+        }
+        .nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+        .nav-item .nav-badge {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .nav-item.active .nav-badge { background: rgba(255,255,255,0.3); }
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border-light);
+        }
+        .sidebar-footer .btn { width: 100%; justify-content: center; font-size: 13px; }
+
+        /* ===== MAIN ===== */
+        .main {
+            margin-left: var(--sidebar-w);
+            height: 100vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .main-header {
+            position: sticky;
+            top: 0;
+            background: rgba(250,250,248,0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border-light);
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .main-header h2 { font-size: 20px; font-weight: 700; }
+        .main-header p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+        .main-content { padding: 24px 32px 80px; }
+
+        /* ===== PAGES ===== */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);
+            border: 1px solid var(--border-light);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-title { font-size: 16px; font-weight: 600; }
+        .card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 12px rgba(255,107,53,0.3); }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent:hover { background: var(--accent-dark); }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-light);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-ghost { background: transparent; color: var(--text-light); }
+        .btn-ghost:hover { background: var(--bg); }
+        .btn-danger { background: transparent; color: var(--danger); }
+        .btn-danger:hover { background: #ffeaea; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .stat-card .stat-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-card .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* ===== PARTNER TABS ===== */
+        .partner-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .partner-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            color: var(--text-light);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .partner-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .partner-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .partner-tab .tab-close {
+            font-size: 14px;
+            margin-left: 2px;
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        .partner-tab .tab-close:hover { opacity: 1; }
+        .partner-tab-add {
+            border-style: dashed;
+            border-color: var(--text-muted);
+            color: var(--text-muted);
+        }
+        .partner-tab-add:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ===== SPREADSHEET TABLE ===== */
+        .spread-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .spread-table thead th {
+            background: #F7F7F5;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .spread-table thead th:first-child { width: 40px; text-align: center; }
+        .spread-table tbody td {
+            padding: 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 14px;
+            position: relative;
+        }
+        .spread-table tbody tr:last-child td { border-bottom: none; }
+        .spread-table tbody td:first-child {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 8px;
+            width: 40px;
+            background: #FDFDFB;
+        }
+        .spread-table .cell-input {
+            width: 100%;
+            border: none;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            background: transparent;
+            outline: none;
+            color: var(--text);
+        }
+        .spread-table .cell-input:focus {
+            background: #FFF8F0;
+            box-shadow: inset 0 0 0 2px var(--primary-light);
+        }
+        .spread-table .cell-input::placeholder { color: var(--text-muted); }
+        .spread-table select.cell-input {
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .spread-table .row-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+        .spread-table .btn-row-delete {
+            width: 28px; height: 28px;
+            border: none; background: transparent;
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .spread-table .btn-row-delete:hover { background: #ffeaea; color: var(--danger); }
+
+        /* ===== PARTNER INFO ROW ===== */
+        .partner-info-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: flex-end;
+        }
+        .partner-info-row .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .partner-info-row label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .partner-info-row input,
+        .partner-info-row select {
+            padding: 8px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--card);
+        }
+        .partner-info-row input:focus,
+        .partner-info-row select:focus { border-color: var(--primary); }
+
+        /* ===== ANALYSIS PAGE ===== */
+        .analysis-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .analysis-tab {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+        .analysis-tab:hover { border-color: var(--accent); color: var(--accent); }
+        .analysis-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        /* ===== DATA TABLE ===== */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .data-table thead th {
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-table tbody td {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .data-table tbody tr:hover { background: #FDFDFB; }
+        .data-table .text-right { text-align: right; }
+        .data-table .text-bold { font-weight: 600; }
+
+        /* ===== BAR CHART ===== */
+        .bar-chart { margin: 16px 0; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bar-track {
+            flex: 1;
+            height: 28px;
+            background: var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            min-width: fit-content;
+        }
+        .bar-fill.orange { background: linear-gradient(90deg, var(--primary), var(--primary-light)); }
+        .bar-fill.mint { background: linear-gradient(90deg, var(--accent), var(--accent-light)); }
+        .bar-value {
+            width: 90px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        /* ===== PARTNER CARD (for individual report) ===== */
+        .report-card {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .report-card-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 20px 24px;
+        }
+        .report-card-header h3 { font-size: 18px; font-weight: 700; }
+        .report-card-header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+        .report-card-body { padding: 20px 24px; }
+
+        /* ===== PROPOSAL ===== */
+        .proposal-preview {
+            background: #FDFDFB;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: keep-all;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .proposal-preview h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 16px; color: var(--text-light); margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; max-width: 320px; margin: 0 auto; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 28px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            transform: translateY(20px);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.show .modal { transform: translateY(0); }
+        .modal h3 { font-size: 18px; margin-bottom: 16px; }
+        .modal .field { margin-bottom: 12px; }
+        .modal .field label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+        .modal .field input,
+        .modal .field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+        }
+        .modal .field input:focus,
+        .modal .field select:focus { border-color: var(--primary); }
+        .modal .btn-row { margin-top: 20px; justify-content: flex-end; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 200;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .main-content { padding: 16px; }
+            .main-header { padding: 16px; }
+            .mobile-nav {
+                display: flex !important;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                background: var(--card);
+                border-top: 1px solid var(--border);
+                z-index: 50;
+                justify-content: space-around;
+                padding: 8px 0;
+            }
+            .mobile-nav .mob-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                font-size: 10px;
+                color: var(--text-muted);
+                padding: 6px 12px;
+                cursor: pointer;
+                border-radius: 8px;
+            }
+            .mobile-nav .mob-item.active { color: var(--primary); }
+            .mobile-nav .mob-item .mob-icon { font-size: 20px; }
+            .main { padding-bottom: 70px; }
+        }
+        .mobile-nav { display: none; }
+
+        /* ===== LOCK SCREEN ===== */
+        .lock-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #FFF5EE, #FAFAF8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .lock-box {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 40px;
+            width: 380px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-light);
+        }
+        .lock-box .lock-icon { font-size: 48px; margin-bottom: 16px; }
+        .lock-box h2 { font-size: 22px; color: var(--primary); margin-bottom: 4px; }
+        .lock-box .lock-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+        .lock-box input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            text-align: center;
+            letter-spacing: 4px;
+            margin-bottom: 12px;
+        }
+        .lock-box input:focus { border-color: var(--primary); }
+        .lock-box .lock-error {
+            color: var(--danger);
+            font-size: 13px;
+            margin-bottom: 8px;
+            min-height: 20px;
+        }
+        .lock-box .btn { width: 100%; justify-content: center; padding: 12px; font-size: 15px; }
+        .lock-box .lock-setup-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 16px;
+        }
+
+        /* ===== PRESENT MODE ===== */
+        .present-mode .sidebar { display: none; }
+        .present-mode .mobile-nav { display: none !important; }
+        .present-mode .main { margin-left: 0; }
+        .present-bar {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            padding: 10px 20px;
+            z-index: 60;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            box-shadow: 0 2px 12px rgba(46,196,182,0.3);
+        }
+        .present-mode .present-bar { display: flex; }
+        .present-mode .main-header { top: 44px; }
+        .present-bar .present-info { font-weight: 600; }
+        .present-bar .btn { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .present-bar .btn:hover { background: rgba(255,255,255,0.3); }
+    </style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div class="lock-screen" id="lockScreen" style="display:none;">
+    <div class="lock-box">
+        <div class="lock-icon">🔐</div>
+        <h2>슈파 SHUPA</h2>
+        <div class="lock-sub">데이터 보호를 위해 비밀번호를 입력해주세요</div>
+        <input type="password" id="lockPasswordInput" placeholder="비밀번호" onkeydown="if(event.key==='Enter')unlockApp()">
+        <div class="lock-error" id="lockError"></div>
+        <button class="btn btn-primary" onclick="unlockApp()">🔓 열기</button>
+        <div class="lock-setup-hint" id="lockSetupHint" style="display:none;">
+            처음이시면 원하는 비밀번호를 입력하세요. 이 비밀번호로 설정됩니다.
+        </div>
+    </div>
+</div>
+
+<!-- PRESENT MODE BAR -->
+<div class="present-bar" id="presentBar">
+    <span class="present-info">🔒 발표 모드: <span id="presentPartnerName"></span> 데이터만 표시 중</span>
+    <button class="btn btn-sm" onclick="exitPresentMode()">✕ 발표 모드 종료</button>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <h1>슈파 SHUPA</h1>
+        <p>식자재 공동구매 플랫폼</p>
+    </div>
+    <div class="sidebar-nav">
+        <div class="nav-item active" onclick="showPage('input')" data-page="input">
+            <span class="nav-icon">📋</span>
+            <span>파트너 입력</span>
+            <span class="nav-badge" id="navBadgePartners">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('analysis')" data-page="analysis">
+            <span class="nav-icon">📊</span>
+            <span>분석 대시보드</span>
+        </div>
+        <div class="nav-item" onclick="showPage('proposal')" data-page="proposal">
+            <span class="nav-icon">📄</span>
+            <span>협상 제안서</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">
+        <button class="btn btn-accent" onclick="openPresentMode()" style="width:100%; justify-content:center; margin-bottom:8px;">
+            🎬 발표 모드
+        </button>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline" onclick="showDataMgmt()" style="flex:1; justify-content:center;">
+                💾 데이터
+            </button>
+            <button class="btn btn-outline" onclick="lockApp()" style="flex:1; justify-content:center;">
+                🔐 잠금
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+    <div class="mob-item active" onclick="showPage('input')" data-page="input">
+        <span class="mob-icon">📋</span>입력
+    </div>
+    <div class="mob-item" onclick="showPage('analysis')" data-page="analysis">
+        <span class="mob-icon">📊</span>분석
+    </div>
+    <div class="mob-item" onclick="showPage('proposal')" data-page="proposal">
+        <span class="mob-icon">📄</span>제안서
+    </div>
+    <div class="mob-item" onclick="showDataMgmt()" data-page="data">
+        <span class="mob-icon">💾</span>데이터
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- ==================== PAGE: INPUT ==================== -->
+    <div class="page active" id="page-input">
+        <div class="main-header">
+            <div>
+                <h2>파트너 데이터 입력</h2>
+                <p>파트너별 식자재 사용량을 엑셀처럼 표에서 바로 입력하세요</p>
+            </div>
+        </div>
+        <div class="main-content">
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#FFF0E8;">🏪</div>
+                    <div class="stat-value" id="statPartners">0</div>
+                    <div class="stat-label">등록 파트너</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#E8FBF8;">📦</div>
+                    <div class="stat-value" id="statItems">0</div>
+                    <div class="stat-label">전체 품목 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#FFF8E8;">📂</div>
+                    <div class="stat-value" id="statCategories">0</div>
+                    <div class="stat-label">품목 종류</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#F0E8FF;">💰</div>
+                    <div class="stat-value" id="statMonthlyCost">-</div>
+                    <div class="stat-label">월 예상 총비용</div>
+                </div>
+            </div>
+
+            <!-- Partner tabs + Spreadsheet -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">파트너별 품목 입력</div>
+                        <div class="card-subtitle">파트너 탭을 선택하고 품목을 입력하세요. Tab/Enter로 다음 셀로 이동합니다.</div>
+                    </div>
+                    <button class="btn btn-accent" onclick="document.getElementById('excelFileInput').click()">
+                        📊 엑셀에서 가져오기
+                    </button>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onExcelFileSelected(event)">
+                </div>
+
+                <div class="partner-tabs" id="partnerTabs">
+                    <div class="partner-tab partner-tab-add" onclick="openAddPartnerModal()">
+                        + 파트너 추가
+                    </div>
+                </div>
+
+                <div id="spreadsheetArea">
+                    <div class="empty-state" id="emptyPartnerMsg">
+                        <div class="empty-icon">🏪</div>
+                        <h3>파트너를 추가해주세요</h3>
+                        <p>위의 '+ 파트너 추가' 버튼을 눌러서 파트너를 등록하면, 여기에 품목 입력 표가 나타납니다.</p>
+                    </div>
+
+                    <div id="spreadsheetContent" style="display:none;">
+                        <div class="partner-info-row" id="partnerInfoRow">
+                            <div class="field">
+                                <label>파트너명</label>
+                                <input type="text" id="editPartnerName" readonly style="background:#F7F7F5;">
+                            </div>
+                            <div class="field">
+                                <label>업종</label>
+                                <select id="editPartnerType" onchange="updatePartnerType()">
+                                    <option value="한식">한식</option>
+                                    <option value="중식">중식</option>
+                                    <option value="일식">일식</option>
+                                    <option value="양식">양식</option>
+                                    <option value="치킨/호프">치킨/호프</option>
+                                    <option value="분식">분식</option>
+                                    <option value="카페">카페</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <table class="spread-table" id="spreadTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th style="min-width:140px;">품목명</th>
+                                    <th style="min-width:100px;">월 사용량</th>
+                                    <th style="min-width:80px;">단위</th>
+                                    <th style="min-width:120px;">현재 단가(원)</th>
+                                    <th style="min-width:100px;">월 비용</th>
+                                    <th style="width:50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="spreadBody"></tbody>
+                        </table>
+                        <div style="margin-top:8px;">
+                            <button class="btn btn-ghost btn-sm" onclick="addSpreadRow()">+ 행 추가</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== PAGE: ANALYSIS ==================== -->
+    <div class="page" id="page-analysis">
+        <div class="main-header">
+            <div>
+                <h2>분석 대시보드</h2>
+                <p>파트너별/공급처별 데이터를 한눈에 확인하세요</p>
+            </div>
+        </div>
+        <div class="main-content">
+
+            <div class="analysis-selector">
+                <div class="analysis-tab active" onclick="showAnalysisTab('partner')" data-atab="partner">
+                    🏪 파트너별 주문 현황
+                </div>
+                <div class="analysis-tab" onclick="showAnalysisTab('supplier')" data-atab="supplier">
+                    🚚 공급처용 총구매량
+                </div>
+            </div>
+
+            <!-- Partner Individual Report -->
+            <div id="analysisPartner">
+                <div id="analysisPartnerSelect" class="card" style="padding:16px 24px;">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <span style="font-size:14px; font-weight:500;">파트너 선택:</span>
+                        <select id="reportPartnerSelect" onchange="renderPartnerReport()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;">
+                            <option value="">-- 파트너를 선택하세요 --</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="copyPartnerReport()">📋 클립보드 복사</button>
+                    </div>
+                </div>
+                <div id="partnerReportArea" style="margin-top:16px;"></div>
+            </div>
+
+            <!-- Supplier Total Report -->
+            <div id="analysisSupplier" style="display:none;">
+                <div id="supplierReportArea"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== PAGE: PROPOSAL ==================== -->
+    <div class="page" id="page-proposal">
+        <div class="main-header">
+            <div>
+                <h2>협상 제안서</h2>
+                <p>공급업체에 보낼 제안서를 자동으로 생성합니다</p>
+            </div>
+        </div>
+        <div class="main-content">
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">제안서 설정</div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div class="field">
+                        <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">공급업체명</label>
+                        <input type="text" id="proposalSupplier" placeholder="예: OO식품" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;">
+                    </div>
+                    <div class="field">
+                        <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">희망 할인율 (%)</label>
+                        <input type="number" id="proposalDiscount" placeholder="예: 15" min="0" max="50" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;">
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary" onclick="generateProposal()">📄 제안서 생성</button>
+                    <button class="btn btn-outline" onclick="copyProposal()">📋 클립보드 복사</button>
+                    <button class="btn btn-outline" onclick="downloadProposal()">💾 텍스트 파일 다운로드</button>
+                </div>
+            </div>
+
+            <div id="proposalArea" style="margin-top:16px;"></div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- ADD PARTNER MODAL -->
+<div class="modal-overlay" id="modalAddPartner">
+    <div class="modal">
+        <h3>파트너 추가</h3>
+        <div class="field">
+            <label>파트너(업체)명</label>
+            <input type="text" id="newPartnerName" placeholder="예: 홍길동 치킨집">
+        </div>
+        <div class="field">
+            <label>업종</label>
+            <select id="newPartnerType">
+                <option value="한식">한식</option>
+                <option value="중식">중식</option>
+                <option value="일식">일식</option>
+                <option value="양식">양식</option>
+                <option value="치킨/호프">치킨/호프</option>
+                <option value="분식">분식</option>
+                <option value="카페">카페</option>
+                <option value="기타">기타</option>
+            </select>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-ghost" onclick="closeModal('modalAddPartner')">취소</button>
+            <button class="btn btn-primary" onclick="addPartner()">추가</button>
+        </div>
+    </div>
+</div>
+
+<!-- DATA MGMT MODAL -->
+<div class="modal-overlay" id="modalDataMgmt">
+    <div class="modal">
+        <h3>💾 데이터 관리</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">데이터는 브라우저에 자동 저장됩니다. 다른 기기로 옮기려면 내보내기/가져오기를 사용하세요.</p>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn btn-outline" onclick="exportJSON()">📤 데이터 내보내기 (JSON)</button>
+            <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">📥 데이터 가져오기 (JSON)</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importJSON(event)">
+            <button class="btn btn-outline" onclick="exportCSV()">📊 CSV 다운로드 (엑셀용)</button>
+            <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-outline" onclick="openPasswordSetup()" style="flex:1;">🔑 비밀번호 설정</button>
+                <button class="btn btn-danger" onclick="removePassword()" id="btnRemovePassword" style="display:none;">비밀번호 해제</button>
+            </div>
+            <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+            <button class="btn btn-danger" onclick="clearAllData()">🗑️ 전체 데이터 삭제</button>
+        </div>
+        <div class="btn-row" style="margin-top:16px;">
+            <button class="btn btn-ghost" onclick="closeModal('modalDataMgmt')" style="margin-left:auto;">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- PASSWORD SETUP MODAL -->
+<div class="modal-overlay" id="modalPassword">
+    <div class="modal">
+        <h3>🔑 비밀번호 설정</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+            비밀번호를 설정하면 도구를 열 때마다 비밀번호를 입력해야 합니다.
+        </p>
+        <div class="field">
+            <label>새 비밀번호</label>
+            <input type="password" id="setupPassword1" placeholder="비밀번호 입력" style="width:100%;">
+        </div>
+        <div class="field">
+            <label>비밀번호 확인</label>
+            <input type="password" id="setupPassword2" placeholder="한 번 더 입력" style="width:100%;" onkeydown="if(event.key==='Enter')savePassword()">
+        </div>
+        <div id="setupPasswordError" style="color:var(--danger); font-size:13px; min-height:20px; margin-top:4px;"></div>
+        <div class="btn-row">
+            <button class="btn btn-ghost" onclick="closeModal('modalPassword')">취소</button>
+            <button class="btn btn-primary" onclick="savePassword()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- PRESENT MODE MODAL -->
+<div class="modal-overlay" id="modalPresent">
+    <div class="modal">
+        <h3>🎬 발표 모드</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+            파트너를 선택하면 해당 파트너 데이터만 화면에 표시됩니다.<br>
+            다른 파트너의 데이터는 완전히 숨겨집니다.
+        </p>
+        <div class="field">
+            <label>표시할 파트너 선택</label>
+            <select id="presentPartnerSelect" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;">
+            </select>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-ghost" onclick="closeModal('modalPresent')">취소</button>
+            <button class="btn btn-accent" onclick="startPresentMode()">🎬 시작</button>
+        </div>
+    </div>
+</div>
+
+<!-- EXCEL IMPORT MODAL -->
+<div class="modal-overlay" id="modalExcelImport">
+    <div class="modal" style="width:700px; max-width:95%; max-height:90vh; overflow-y:auto;">
+        <h3>📊 엑셀 파일 가져오기</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+            엑셀 파일의 각 열이 어떤 데이터인지 매칭해주세요.
+        </p>
+
+        <!-- Step 1: Partner info -->
+        <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+            <div class="field" style="flex:1; min-width:150px;">
+                <label style="display:block; font-size:13px; color:var(--text-light); margin-bottom:4px;">파트너(업체)명</label>
+                <input type="text" id="excelPartnerName" placeholder="예: 홍길동 치킨집" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;">
+            </div>
+            <div class="field" style="min-width:120px;">
+                <label style="display:block; font-size:13px; color:var(--text-light); margin-bottom:4px;">업종</label>
+                <select id="excelPartnerType" style="width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;">
+                    <option value="한식">한식</option>
+                    <option value="중식">중식</option>
+                    <option value="일식">일식</option>
+                    <option value="양식">양식</option>
+                    <option value="치킨/호프">치킨/호프</option>
+                    <option value="분식">분식</option>
+                    <option value="카페">카페</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Step 2: Sheet select (if multiple) -->
+        <div id="excelSheetSelect" style="display:none; margin-bottom:16px;">
+            <label style="display:block; font-size:13px; color:var(--text-light); margin-bottom:4px;">시트 선택</label>
+            <select id="excelSheet" onchange="onSheetChange()" style="padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; outline:none;"></select>
+        </div>
+
+        <!-- Step 3: Column mapping -->
+        <div id="excelColumnMapping" style="display:none; margin-bottom:16px;">
+            <label style="display:block; font-size:13px; color:var(--text-light); margin-bottom:8px; font-weight:600;">열 매핑 (각 열이 어떤 데이터인지 선택)</label>
+            <div id="excelMappingRow" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;"></div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <input type="checkbox" id="excelHasHeader" checked>
+                <label for="excelHasHeader" style="font-size:13px; color:var(--text-light); cursor:pointer;">첫 번째 행은 제목(헤더)입니다</label>
+            </div>
+        </div>
+
+        <!-- Step 4: Preview -->
+        <div id="excelPreview" style="display:none; margin-bottom:16px;">
+            <label style="display:block; font-size:13px; color:var(--text-light); margin-bottom:8px; font-weight:600;">미리보기 (최대 5행)</label>
+            <div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px;">
+                <table class="data-table" id="excelPreviewTable" style="margin:0; font-size:13px;"></table>
+            </div>
+            <div id="excelPreviewInfo" style="margin-top:8px; font-size:13px; color:var(--accent); font-weight:500;"></div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-ghost" onclick="closeModal('modalExcelImport')">취소</button>
+            <button class="btn btn-primary" id="excelImportBtn" onclick="doExcelImport()" style="display:none;">가져오기</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA STORE =====
+let partners = []; // [{name, type, items: [{item, qty, unit, price}]}]
+let currentPartnerIdx = -1;
+let presentModePartner = null; // null = off, string = partner name
+
+// ===== INIT =====
+window.onload = function() {
+    // Check if password is set
+    const hasPassword = localStorage.getItem('shupa_password');
+    if (hasPassword) {
+        document.getElementById('lockScreen').style.display = 'flex';
+        document.getElementById('lockSetupHint').style.display = 'none';
+        setTimeout(() => document.getElementById('lockPasswordInput').focus(), 100);
+        return; // Don't load data until unlocked
+    }
+    initApp();
+};
+
+function initApp() {
+    const saved = localStorage.getItem('shupa_v2_data');
+    if (saved) {
+        try {
+            partners = JSON.parse(saved);
+        } catch(e) {
+            partners = [];
+        }
+    }
+    // Migrate from v1 if v2 is empty
+    if (partners.length === 0) {
+        const v1 = localStorage.getItem('shupa_data');
+        if (v1) {
+            try {
+                const entries = JSON.parse(v1);
+                if (Array.isArray(entries) && entries.length > 0) {
+                    migrateV1(entries);
+                }
+            } catch(e) {}
+        }
+    }
+    refreshAll();
+    if (partners.length > 0) {
+        selectPartner(0);
+    }
+    // Update password button visibility
+    updatePasswordUI();
+}
+
+function migrateV1(entries) {
+    const pMap = {};
+    entries.forEach(e => {
+        if (!pMap[e.partner]) {
+            pMap[e.partner] = { name: e.partner, type: e.type || '기타', items: [] };
+        }
+        pMap[e.partner].items.push({
+            item: e.item, qty: e.qty, unit: e.unit, price: e.price || 0
+        });
+    });
+    partners = Object.values(pMap);
+    saveData();
+    showToast('기존 데이터를 v2 형식으로 변환했습니다!');
+}
+
+function saveData() {
+    localStorage.setItem('shupa_v2_data', JSON.stringify(partners));
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== MODAL =====
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+// ===== PAGE NAVIGATION =====
+function showPage(pageName) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + pageName).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.mob-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll(`[data-page="${pageName}"]`).forEach(n => n.classList.add('active'));
+
+    if (pageName === 'analysis') renderAnalysis();
+    if (pageName === 'proposal') generateProposal();
+}
+
+// ===== PARTNER MANAGEMENT =====
+function openAddPartnerModal() {
+    document.getElementById('newPartnerName').value = '';
+    document.getElementById('newPartnerType').value = '한식';
+    openModal('modalAddPartner');
+    setTimeout(() => document.getElementById('newPartnerName').focus(), 100);
+}
+
+function addPartner() {
+    const name = document.getElementById('newPartnerName').value.trim();
+    const type = document.getElementById('newPartnerType').value;
+    if (!name) { alert('파트너명을 입력해주세요.'); return; }
+    if (partners.find(p => p.name === name)) { alert('이미 등록된 파트너입니다.'); return; }
+
+    partners.push({ name, type, items: [{ item: '', qty: '', unit: 'L', price: '' }] });
+    saveData();
+    closeModal('modalAddPartner');
+    refreshAll();
+    selectPartner(partners.length - 1);
+    showToast(`'${name}' 파트너가 추가되었습니다!`);
+}
+
+function deletePartner(idx) {
+    if (!confirm(`'${partners[idx].name}' 파트너의 모든 데이터를 삭제하시겠습니까?`)) return;
+    partners.splice(idx, 1);
+    saveData();
+    if (currentPartnerIdx >= partners.length) currentPartnerIdx = partners.length - 1;
+    refreshAll();
+    if (partners.length > 0) selectPartner(Math.max(0, currentPartnerIdx));
+    else { currentPartnerIdx = -1; renderSpreadsheet(); }
+    showToast('파트너가 삭제되었습니다.');
+}
+
+function selectPartner(idx) {
+    // Save current before switching
+    saveSpreadsheetData();
+    currentPartnerIdx = idx;
+    renderPartnerTabs();
+    renderSpreadsheet();
+}
+
+function updatePartnerType() {
+    if (currentPartnerIdx < 0) return;
+    partners[currentPartnerIdx].type = document.getElementById('editPartnerType').value;
+    saveData();
+}
+
+// ===== PARTNER TABS =====
+function renderPartnerTabs() {
+    const container = document.getElementById('partnerTabs');
+    let html = '';
+    partners.forEach((p, i) => {
+        const active = i === currentPartnerIdx ? 'active' : '';
+        html += `<div class="partner-tab ${active}" onclick="selectPartner(${i})">
+            ${p.name}
+            <span class="tab-close" onclick="event.stopPropagation(); deletePartner(${i})">×</span>
+        </div>`;
+    });
+    html += `<div class="partner-tab partner-tab-add" onclick="openAddPartnerModal()">+ 파트너 추가</div>`;
+    container.innerHTML = html;
+}
+
+// ===== SPREADSHEET =====
+function renderSpreadsheet() {
+    const area = document.getElementById('spreadsheetContent');
+    const emptyMsg = document.getElementById('emptyPartnerMsg');
+
+    if (currentPartnerIdx < 0 || partners.length === 0) {
+        area.style.display = 'none';
+        emptyMsg.style.display = 'block';
+        return;
+    }
+    area.style.display = 'block';
+    emptyMsg.style.display = 'none';
+
+    const p = partners[currentPartnerIdx];
+    document.getElementById('editPartnerName').value = p.name;
+    document.getElementById('editPartnerType').value = p.type;
+
+    if (!p.items || p.items.length === 0) {
+        p.items = [{ item: '', qty: '', unit: 'L', price: '' }];
+    }
+
+    const tbody = document.getElementById('spreadBody');
+    let html = '';
+    p.items.forEach((row, i) => {
+        const cost = (parseFloat(row.qty) || 0) * (parseFloat(row.price) || 0);
+        html += `<tr>
+            <td>${i + 1}</td>
+            <td><input class="cell-input" type="text" data-row="${i}" data-col="item" value="${escHtml(row.item || '')}" placeholder="품목명" onchange="onCellChange(${i},'item',this.value)" onkeydown="onCellKey(event,${i},0)"></td>
+            <td><input class="cell-input" type="number" data-row="${i}" data-col="qty" value="${row.qty || ''}" placeholder="수량" min="0" onchange="onCellChange(${i},'qty',this.value)" onkeydown="onCellKey(event,${i},1)"></td>
+            <td><select class="cell-input" data-row="${i}" data-col="unit" onchange="onCellChange(${i},'unit',this.value)" onkeydown="onCellKey(event,${i},2)">
+                <option value="L" ${row.unit==='L'?'selected':''}>L</option>
+                <option value="kg" ${row.unit==='kg'?'selected':''}>kg</option>
+                <option value="개" ${row.unit==='개'?'selected':''}>개</option>
+                <option value="박스" ${row.unit==='박스'?'selected':''}>박스</option>
+                <option value="포" ${row.unit==='포'?'selected':''}>포</option>
+                <option value="팩" ${row.unit==='팩'?'selected':''}>팩</option>
+                <option value="병" ${row.unit==='병'?'selected':''}>병</option>
+                <option value="캔" ${row.unit==='캔'?'selected':''}>캔</option>
+            </select></td>
+            <td><input class="cell-input" type="number" data-row="${i}" data-col="price" value="${row.price || ''}" placeholder="단가" min="0" onchange="onCellChange(${i},'price',this.value)" onkeydown="onCellKey(event,${i},3)"></td>
+            <td style="padding:10px 14px; color:var(--text-light); font-size:13px;">${cost > 0 ? cost.toLocaleString() + '원' : '-'}</td>
+            <td class="row-actions"><button class="btn-row-delete" onclick="deleteSpreadRow(${i})" title="삭제">×</button></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function onCellChange(rowIdx, col, val) {
+    if (currentPartnerIdx < 0) return;
+    const p = partners[currentPartnerIdx];
+    if (!p.items[rowIdx]) return;
+    p.items[rowIdx][col] = val;
+    saveData();
+    // Re-render to update cost column
+    renderSpreadsheet();
+    updateStats();
+    // Re-focus the cell
+    const input = document.querySelector(`[data-row="${rowIdx}"][data-col="${col}"]`);
+    if (input) input.focus();
+}
+
+function onCellKey(event, rowIdx, colIdx) {
+    const cols = ['item', 'qty', 'unit', 'price'];
+    if (event.key === 'Tab' || event.key === 'Enter') {
+        event.preventDefault();
+        let nextRow = rowIdx;
+        let nextCol = colIdx + 1;
+        if (event.shiftKey) {
+            nextCol = colIdx - 1;
+            if (nextCol < 0) { nextRow--; nextCol = cols.length - 1; }
+        } else {
+            if (nextCol >= cols.length) {
+                nextRow++;
+                nextCol = 0;
+                // Auto-add row if at last row
+                if (nextRow >= partners[currentPartnerIdx].items.length) {
+                    saveSpreadsheetData();
+                    addSpreadRow();
+                }
+            }
+        }
+        if (nextRow >= 0 && nextRow < partners[currentPartnerIdx].items.length) {
+            const nextInput = document.querySelector(`[data-row="${nextRow}"][data-col="${cols[nextCol]}"]`);
+            if (nextInput) nextInput.focus();
+        }
+    }
+}
+
+function addSpreadRow() {
+    if (currentPartnerIdx < 0) return;
+    partners[currentPartnerIdx].items.push({ item: '', qty: '', unit: 'L', price: '' });
+    saveData();
+    renderSpreadsheet();
+    // Focus new row
+    const newIdx = partners[currentPartnerIdx].items.length - 1;
+    setTimeout(() => {
+        const input = document.querySelector(`[data-row="${newIdx}"][data-col="item"]`);
+        if (input) input.focus();
+    }, 50);
+}
+
+function deleteSpreadRow(rowIdx) {
+    if (currentPartnerIdx < 0) return;
+    const p = partners[currentPartnerIdx];
+    if (p.items.length <= 1) {
+        p.items = [{ item: '', qty: '', unit: 'L', price: '' }];
+    } else {
+        p.items.splice(rowIdx, 1);
+    }
+    saveData();
+    renderSpreadsheet();
+    updateStats();
+}
+
+function saveSpreadsheetData() {
+    // Data is saved on each cell change, so this is mostly a no-op now
+}
+
+// ===== STATS =====
+function updateStats() {
+    const allItems = getAllItems();
+    const uniqueItems = [...new Set(allItems.map(e => e.item).filter(Boolean))];
+    let totalMonthlyCost = 0;
+    allItems.forEach(e => {
+        if (e.qty > 0 && e.price > 0) totalMonthlyCost += e.qty * e.price;
+    });
+
+    document.getElementById('statPartners').textContent = partners.length;
+    document.getElementById('statItems').textContent = allItems.filter(e => e.item).length;
+    document.getElementById('statCategories').textContent = uniqueItems.length;
+    document.getElementById('statMonthlyCost').textContent = totalMonthlyCost > 0
+        ? (totalMonthlyCost >= 10000 ? Math.round(totalMonthlyCost / 10000) + '만원' : totalMonthlyCost.toLocaleString() + '원')
+        : '-';
+
+    // Nav badge
+    document.getElementById('navBadgePartners').textContent = partners.length;
+}
+
+function getAllItems() {
+    const all = [];
+    partners.forEach(p => {
+        (p.items || []).forEach(item => {
+            if (item.item) {
+                all.push({
+                    partner: p.name,
+                    type: p.type,
+                    item: item.item,
+                    qty: parseFloat(item.qty) || 0,
+                    unit: item.unit || 'L',
+                    price: parseFloat(item.price) || 0
+                });
+            }
+        });
+    });
+    return all;
+}
+
+// ===== REFRESH =====
+function refreshAll() {
+    renderPartnerTabs();
+    renderSpreadsheet();
+    updateStats();
+}
+
+// ===== ANALYSIS =====
+function showAnalysisTab(tab) {
+    document.querySelectorAll('.analysis-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll(`[data-atab="${tab}"]`).forEach(t => t.classList.add('active'));
+    document.getElementById('analysisPartner').style.display = tab === 'partner' ? 'block' : 'none';
+    document.getElementById('analysisSupplier').style.display = tab === 'supplier' ? 'block' : 'none';
+    if (tab === 'supplier') renderSupplierReport();
+}
+
+function renderAnalysis() {
+    // Populate partner select
+    const sel = document.getElementById('reportPartnerSelect');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">-- 파트너를 선택하세요 --</option>';
+    partners.forEach(p => {
+        sel.innerHTML += `<option value="${escHtml(p.name)}">${escHtml(p.name)} (${p.type})</option>`;
+    });
+    if (prev) sel.value = prev;
+    renderPartnerReport();
+    renderSupplierReport();
+}
+
+function renderPartnerReport() {
+    const sel = document.getElementById('reportPartnerSelect');
+    const area = document.getElementById('partnerReportArea');
+    const pName = sel.value;
+
+    if (!pName) {
+        if (partners.length === 0) {
+            area.innerHTML = `<div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <h3>데이터가 없습니다</h3>
+                <p>'파트너 입력' 탭에서 먼저 파트너와 품목을 등록해주세요.</p>
+            </div>`;
+        } else {
+            area.innerHTML = `<div class="empty-state">
+                <div class="empty-icon">👆</div>
+                <h3>파트너를 선택하세요</h3>
+                <p>위에서 파트너를 선택하면 해당 파트너의 주문 현황이 표시됩니다.</p>
+            </div>`;
+        }
+        return;
+    }
+
+    const partner = partners.find(p => p.name === pName);
+    if (!partner) { area.innerHTML = ''; return; }
+
+    const items = (partner.items || []).filter(i => i.item);
+    let totalMonthly = 0;
+    items.forEach(i => { totalMonthly += (parseFloat(i.qty) || 0) * (parseFloat(i.price) || 0); });
+
+    let html = `<div class="report-card">
+        <div class="report-card-header">
+            <h3>🏪 ${escHtml(partner.name)}</h3>
+            <p>${partner.type} · 등록 품목 ${items.length}개 · 월 예상비용 ${totalMonthly > 0 ? totalMonthly.toLocaleString() + '원' : '미입력'}</p>
+        </div>
+        <div class="report-card-body">`;
+
+    if (items.length === 0) {
+        html += `<p style="color:var(--text-muted); text-align:center; padding:20px;">등록된 품목이 없습니다.</p>`;
+    } else {
+        html += `<table class="data-table">
+            <thead><tr>
+                <th>품목</th>
+                <th class="text-right">월 사용량</th>
+                <th class="text-right">현재 단가</th>
+                <th class="text-right">월 예상비용</th>
+                <th class="text-right">6개월 예상비용</th>
+            </tr></thead><tbody>`;
+        items.forEach(i => {
+            const q = parseFloat(i.qty) || 0;
+            const p = parseFloat(i.price) || 0;
+            const m = q * p;
+            html += `<tr>
+                <td class="text-bold">${escHtml(i.item)}</td>
+                <td class="text-right">${q > 0 ? q.toLocaleString() + ' ' + (i.unit || '') : '-'}</td>
+                <td class="text-right">${p > 0 ? p.toLocaleString() + '원' : '-'}</td>
+                <td class="text-right">${m > 0 ? m.toLocaleString() + '원' : '-'}</td>
+                <td class="text-right text-bold">${m > 0 ? (m * 6).toLocaleString() + '원' : '-'}</td>
+            </tr>`;
+        });
+        if (totalMonthly > 0) {
+            html += `<tr style="border-top:2px solid var(--border);">
+                <td class="text-bold" style="color:var(--primary);">합계</td>
+                <td></td><td></td>
+                <td class="text-right text-bold" style="color:var(--primary);">${totalMonthly.toLocaleString()}원</td>
+                <td class="text-right text-bold" style="color:var(--primary);">${(totalMonthly * 6).toLocaleString()}원</td>
+            </tr>`;
+        }
+        html += `</tbody></table>`;
+    }
+    html += `</div></div>`;
+    area.innerHTML = html;
+}
+
+function renderSupplierReport() {
+    const area = document.getElementById('supplierReportArea');
+    const allItems = getAllItems();
+
+    if (allItems.length === 0) {
+        area.innerHTML = `<div class="empty-state">
+            <div class="empty-icon">🚚</div>
+            <h3>데이터가 없습니다</h3>
+            <p>'파트너 입력' 탭에서 먼저 데이터를 등록해주세요.</p>
+        </div>`;
+        return;
+    }
+
+    // Group by item + unit
+    const groups = {};
+    allItems.forEach(e => {
+        const key = e.item + '|' + e.unit;
+        if (!groups[key]) {
+            groups[key] = { item: e.item, unit: e.unit, partners: new Set(), totalQty: 0, prices: [] };
+        }
+        groups[key].partners.add(e.partner);
+        groups[key].totalQty += e.qty;
+        if (e.price > 0) groups[key].prices.push(e.price);
+    });
+    const sorted = Object.values(groups).sort((a, b) => b.totalQty - a.totalQty);
+    const maxQty = sorted.length > 0 ? sorted[0].totalQty : 1;
+
+    // Summary card
+    const totalPartners = partners.length;
+    const typeSet = new Set(partners.map(p => p.type));
+    let totalSixMonth = 0;
+    sorted.forEach(g => {
+        const avgP = g.prices.length > 0 ? g.prices.reduce((a,b)=>a+b,0)/g.prices.length : 0;
+        totalSixMonth += g.totalQty * 6 * avgP;
+    });
+
+    let html = `<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:20px;">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#FFF0E8;">🏪</div>
+            <div class="stat-value">${totalPartners}</div>
+            <div class="stat-label">참여 파트너</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#E8FBF8;">📂</div>
+            <div class="stat-value">${sorted.length}</div>
+            <div class="stat-label">품목 종류</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#F0E8FF;">💰</div>
+            <div class="stat-value">${totalSixMonth > 0 ? (totalSixMonth >= 10000 ? Math.round(totalSixMonth / 10000).toLocaleString() + '만원' : totalSixMonth.toLocaleString() + '원') : '-'}</div>
+            <div class="stat-label">6개월 예상 총거래액</div>
+        </div>
+    </div>`;
+
+    // Bar chart
+    html += `<div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">품목별 월 총사용량</div>
+                <div class="card-subtitle">전체 파트너 합산 기준</div>
+            </div>
+        </div>
+        <div class="bar-chart">`;
+    sorted.forEach((g, i) => {
+        const pct = maxQty > 0 ? (g.totalQty / maxQty) * 100 : 0;
+        const barClass = i % 2 === 0 ? 'orange' : 'mint';
+        html += `<div class="bar-row">
+            <div class="bar-label">${escHtml(g.item)}</div>
+            <div class="bar-track">
+                <div class="bar-fill ${barClass}" style="width:${Math.max(pct, 8)}%">${g.totalQty.toLocaleString()}</div>
+            </div>
+            <div class="bar-value">${g.totalQty.toLocaleString()} ${g.unit}/월</div>
+        </div>`;
+    });
+    html += `</div></div>`;
+
+    // Detail table
+    html += `<div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">품목별 상세 (공급처 제출용)</div>
+                <div class="card-subtitle">업종: ${[...typeSet].join(', ')} · 총 ${totalPartners}개 파트너</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="copySupplierReport()">📋 클립보드 복사</button>
+        </div>
+        <table class="data-table">
+            <thead><tr>
+                <th>품목</th>
+                <th>단위</th>
+                <th class="text-right">참여 파트너</th>
+                <th class="text-right">월 총사용량</th>
+                <th class="text-right">6개월 예상량</th>
+                <th class="text-right">평균 단가</th>
+                <th class="text-right">6개월 예상액</th>
+            </tr></thead><tbody>`;
+    sorted.forEach(g => {
+        const avgP = g.prices.length > 0 ? Math.round(g.prices.reduce((a,b)=>a+b,0)/g.prices.length) : 0;
+        const sixQ = g.totalQty * 6;
+        const sixC = avgP > 0 ? sixQ * avgP : 0;
+        html += `<tr>
+            <td class="text-bold">${escHtml(g.item)}</td>
+            <td>${g.unit}</td>
+            <td class="text-right">${g.partners.size}개</td>
+            <td class="text-right text-bold">${g.totalQty.toLocaleString()} ${g.unit}</td>
+            <td class="text-right text-bold">${sixQ.toLocaleString()} ${g.unit}</td>
+            <td class="text-right">${avgP > 0 ? avgP.toLocaleString() + '원' : '-'}</td>
+            <td class="text-right">${sixC > 0 ? sixC.toLocaleString() + '원' : '-'}</td>
+        </tr>`;
+    });
+    html += `</tbody></table></div>`;
+
+    area.innerHTML = html;
+}
+
+// ===== PARTNER REPORT COPY =====
+function copyPartnerReport() {
+    const sel = document.getElementById('reportPartnerSelect');
+    const pName = sel.value;
+    if (!pName) { showToast('파트너를 먼저 선택해주세요.'); return; }
+    const partner = partners.find(p => p.name === pName);
+    if (!partner) return;
+
+    const items = (partner.items || []).filter(i => i.item);
+    let text = `[슈파] ${partner.name} 주문 현황\n`;
+    text += `업종: ${partner.type}\n`;
+    text += `─────────────────\n`;
+    let totalM = 0;
+    items.forEach(i => {
+        const q = parseFloat(i.qty) || 0;
+        const p = parseFloat(i.price) || 0;
+        const m = q * p;
+        totalM += m;
+        text += `${i.item}: 월 ${q > 0 ? q.toLocaleString() + i.unit : '-'}`;
+        if (m > 0) text += ` (${m.toLocaleString()}원/월)`;
+        text += `\n`;
+    });
+    text += `─────────────────\n`;
+    if (totalM > 0) {
+        text += `월 합계: ${totalM.toLocaleString()}원\n`;
+        text += `6개월 합계: ${(totalM*6).toLocaleString()}원\n`;
+    }
+    navigator.clipboard.writeText(text).then(() => showToast('클립보드에 복사되었습니다!'));
+}
+
+function copySupplierReport() {
+    const allItems = getAllItems();
+    const groups = {};
+    allItems.forEach(e => {
+        const key = e.item + '|' + e.unit;
+        if (!groups[key]) {
+            groups[key] = { item: e.item, unit: e.unit, partners: new Set(), totalQty: 0, prices: [] };
+        }
+        groups[key].partners.add(e.partner);
+        groups[key].totalQty += e.qty;
+        if (e.price > 0) groups[key].prices.push(e.price);
+    });
+    const sorted = Object.values(groups).sort((a,b) => b.totalQty - a.totalQty);
+
+    let text = `[슈파] 공급처용 총구매량 정리\n`;
+    text += `참여 파트너: ${partners.length}개 업체\n`;
+    text += `기준: 6개월 예상 물량\n`;
+    text += `═══════════════════════\n`;
+    sorted.forEach(g => {
+        text += `${g.item}: 월 ${g.totalQty.toLocaleString()}${g.unit} → 6개월 ${(g.totalQty*6).toLocaleString()}${g.unit} (${g.partners.size}개 업체)\n`;
+    });
+    text += `═══════════════════════\n`;
+    navigator.clipboard.writeText(text).then(() => showToast('클립보드에 복사되었습니다!'));
+}
+
+// ===== PROPOSAL =====
+function generateProposal() {
+    const area = document.getElementById('proposalArea');
+    const allItems = getAllItems();
+
+    if (allItems.length === 0) {
+        area.innerHTML = `<div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <h3>데이터가 없습니다</h3>
+            <p>먼저 파트너 데이터를 입력하면 제안서를 자동으로 생성합니다.</p>
+        </div>`;
+        return;
+    }
+
+    const supplierName = document.getElementById('proposalSupplier').value.trim() || 'OO식품';
+    const discount = parseFloat(document.getElementById('proposalDiscount').value) || 15;
+
+    const groups = {};
+    allItems.forEach(e => {
+        const key = e.item + '|' + e.unit;
+        if (!groups[key]) {
+            groups[key] = { item: e.item, unit: e.unit, partners: new Set(), totalQty: 0, prices: [] };
+        }
+        groups[key].partners.add(e.partner);
+        groups[key].totalQty += e.qty;
+        if (e.price > 0) groups[key].prices.push(e.price);
+    });
+    const sorted = Object.values(groups).sort((a,b) => b.totalQty - a.totalQty);
+    const typeSet = new Set(partners.map(p => p.type));
+    const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+
+    let proposal = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    proposal += `       공동구매 거래 제안서\n`;
+    proposal += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    proposal += `수신: ${supplierName} 담당자님\n`;
+    proposal += `발신: 슈파(SHUPA) 공동구매 플랫폼\n`;
+    proposal += `일자: ${today}\n\n`;
+
+    proposal += `■ 슈파 소개\n`;
+    proposal += `슈파는 소규모 외식업체들의 식자재 공동구매를 조직하여\n`;
+    proposal += `안정적인 수요를 보장하는 플랫폼입니다.\n\n`;
+
+    proposal += `■ 참여 현황\n`;
+    proposal += `  · 참여 파트너: ${partners.length}개 업체\n`;
+    proposal += `  · 업종 구성: ${[...typeSet].join(', ')}\n`;
+    proposal += `  · 거래 보장 기간: 6개월\n\n`;
+
+    proposal += `■ 품목별 6개월 보장 물량\n`;
+    proposal += `─────────────────────────────\n`;
+    sorted.forEach(g => {
+        const avgP = g.prices.length > 0 ? Math.round(g.prices.reduce((a,b)=>a+b,0)/g.prices.length) : 0;
+        const hopedP = avgP > 0 ? Math.round(avgP * (1 - discount/100)) : 0;
+        proposal += `  ${g.item}\n`;
+        proposal += `    월 ${g.totalQty.toLocaleString()}${g.unit} × 6개월 = ${(g.totalQty*6).toLocaleString()}${g.unit}\n`;
+        if (avgP > 0) {
+            proposal += `    현재 시장가: ${avgP.toLocaleString()}원/${g.unit}\n`;
+            proposal += `    희망 단가: ${hopedP.toLocaleString()}원/${g.unit} (${discount}% 할인)\n`;
+        }
+        proposal += `    참여 업체: ${g.partners.size}개\n\n`;
+    });
+    proposal += `─────────────────────────────\n\n`;
+
+    proposal += `■ 거래 조건 제안\n`;
+    proposal += `  1. 6개월 물량 보장 계약\n`;
+    proposal += `  2. 슈파가 수요를 취합하여 일괄 발주\n`;
+    proposal += `  3. 안정적이고 예측 가능한 거래량 확보\n`;
+    proposal += `  4. 현재 시장가 대비 ${discount}% 할인 희망\n\n`;
+
+    proposal += `■ 기대 효과\n`;
+    proposal += `  · 귀사: 안정적 판로 확보, 물류 효율화\n`;
+    proposal += `  · 파트너: 합리적 단가로 식자재 조달\n`;
+    proposal += `  · 슈파: 지속 가능한 공동구매 생태계 구축\n\n`;
+
+    proposal += `상세 협의를 위한 미팅을 요청드립니다.\n`;
+    proposal += `감사합니다.\n\n`;
+    proposal += `슈파(SHUPA) 드림\n`;
+    proposal += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+    area.innerHTML = `<div class="proposal-preview">${escHtml(proposal)}</div>`;
+    area.dataset.proposalText = proposal;
+}
+
+function copyProposal() {
+    const area = document.getElementById('proposalArea');
+    const text = area.dataset.proposalText;
+    if (!text) { generateProposal(); }
+    const finalText = area.dataset.proposalText;
+    if (!finalText) { showToast('제안서를 먼저 생성해주세요.'); return; }
+    navigator.clipboard.writeText(finalText).then(() => showToast('제안서가 클립보드에 복사되었습니다!'));
+}
+
+function downloadProposal() {
+    const area = document.getElementById('proposalArea');
+    if (!area.dataset.proposalText) generateProposal();
+    const text = area.dataset.proposalText;
+    if (!text) return;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `슈파_협상제안서_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+    showToast('제안서 파일이 다운로드됩니다!');
+}
+
+// ===== DATA MANAGEMENT =====
+function showDataMgmt() {
+    openModal('modalDataMgmt');
+}
+
+function exportJSON() {
+    const blob = new Blob([JSON.stringify(partners, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `슈파_데이터_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    showToast('데이터 파일이 다운로드됩니다!');
+}
+
+function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (Array.isArray(data)) {
+                // Check if v1 or v2 format
+                if (data.length > 0 && data[0].partner) {
+                    // v1 format
+                    migrateV1(data);
+                } else {
+                    partners = data;
+                    saveData();
+                }
+                refreshAll();
+                if (partners.length > 0) selectPartner(0);
+                closeModal('modalDataMgmt');
+                showToast('데이터를 가져왔습니다!');
+            }
+        } catch (err) {
+            alert('파일을 읽을 수 없습니다. 올바른 JSON 파일인지 확인해주세요.');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function exportCSV() {
+    const allItems = getAllItems();
+    const groups = {};
+    allItems.forEach(e => {
+        const key = e.item + '|' + e.unit;
+        if (!groups[key]) {
+            groups[key] = { item: e.item, unit: e.unit, partners: new Set(), totalQty: 0, prices: [] };
+        }
+        groups[key].partners.add(e.partner);
+        groups[key].totalQty += e.qty;
+        if (e.price > 0) groups[key].prices.push(e.price);
+    });
+
+    let csv = '\uFEFF품목,단위,사용 파트너수,월 총사용량,6개월 예상량,평균 현재단가,6개월 예상금액\n';
+    Object.values(groups).forEach(g => {
+        const avgPrice = g.prices.length > 0
+            ? Math.round(g.prices.reduce((a,b)=>a+b,0)/g.prices.length) : 0;
+        csv += `${g.item},${g.unit},${g.partners.size},${g.totalQty},${g.totalQty*6},${avgPrice},${avgPrice>0 ? g.totalQty*6*avgPrice : 0}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `슈파_품목분석_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    showToast('CSV 파일이 다운로드됩니다!');
+}
+
+function clearAllData() {
+    if (!confirm('정말로 모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+    partners = [];
+    currentPartnerIdx = -1;
+    saveData();
+    refreshAll();
+    closeModal('modalDataMgmt');
+    showToast('모든 데이터가 삭제되었습니다.');
+}
+
+// ===== ENTER KEY FOR MODAL =====
+document.getElementById('newPartnerName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addPartner();
+});
+
+// ===== EXCEL IMPORT =====
+let excelWorkbook = null;
+let excelSheetData = [];
+let excelColumnMap = {}; // { colIdx: 'item'|'qty'|'unit'|'price'|'skip' }
+
+function onExcelFileSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            excelWorkbook = XLSX.read(e.target.result, { type: 'array' });
+            const sheetNames = excelWorkbook.SheetNames;
+
+            // Sheet select
+            const sheetSel = document.getElementById('excelSheet');
+            const sheetDiv = document.getElementById('excelSheetSelect');
+            if (sheetNames.length > 1) {
+                sheetSel.innerHTML = sheetNames.map(s => `<option value="${s}">${s}</option>`).join('');
+                sheetDiv.style.display = 'block';
+            } else {
+                sheetDiv.style.display = 'none';
+            }
+
+            // Parse first sheet
+            parseSheet(sheetNames[0]);
+            openModal('modalExcelImport');
+            document.getElementById('excelPartnerName').focus();
+        } catch (err) {
+            alert('엑셀 파일을 읽을 수 없습니다. 파일을 확인해주세요.');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function onSheetChange() {
+    const sheetName = document.getElementById('excelSheet').value;
+    parseSheet(sheetName);
+}
+
+function parseSheet(sheetName) {
+    const sheet = excelWorkbook.Sheets[sheetName];
+    excelSheetData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    if (excelSheetData.length === 0) {
+        alert('선택한 시트에 데이터가 없습니다.');
+        return;
+    }
+
+    // Auto-detect columns & show mapping
+    buildColumnMapping();
+    renderExcelPreview();
+}
+
+function buildColumnMapping() {
+    const firstRow = excelSheetData[0] || [];
+    const colCount = firstRow.length;
+    excelColumnMap = {};
+
+    // Auto-detect by header names
+    const mappingOptions = [
+        { value: 'skip', label: '(건너뛰기)' },
+        { value: 'item', label: '품목명' },
+        { value: 'qty', label: '월 사용량' },
+        { value: 'unit', label: '단위' },
+        { value: 'price', label: '현재 단가' }
+    ];
+
+    const autoMap = { item: -1, qty: -1, unit: -1, price: -1 };
+    firstRow.forEach((cell, i) => {
+        const s = String(cell).toLowerCase().replace(/\s/g, '');
+        if (s.includes('품목') || s.includes('상품') || s.includes('제품') || s.includes('name') || s.includes('item')) autoMap.item = i;
+        else if (s.includes('수량') || s.includes('사용량') || s.includes('qty') || s.includes('quantity')) autoMap.qty = i;
+        else if (s.includes('단위') || s.includes('unit')) autoMap.unit = i;
+        else if (s.includes('단가') || s.includes('가격') || s.includes('price') || s.includes('금액')) autoMap.price = i;
+    });
+
+    let html = '';
+    for (let i = 0; i < colCount; i++) {
+        const headerLabel = String(firstRow[i] || `열 ${i + 1}`);
+        let detected = 'skip';
+        if (autoMap.item === i) detected = 'item';
+        else if (autoMap.qty === i) detected = 'qty';
+        else if (autoMap.unit === i) detected = 'unit';
+        else if (autoMap.price === i) detected = 'price';
+
+        excelColumnMap[i] = detected;
+
+        html += `<div style="display:flex; flex-direction:column; gap:4px; min-width:100px;">
+            <span style="font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;" title="${escHtml(headerLabel)}">${escHtml(headerLabel)}</span>
+            <select onchange="onMappingChange(${i}, this.value)" style="padding:6px 8px; border:1.5px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; outline:none;">
+                ${mappingOptions.map(o => `<option value="${o.value}" ${o.value === detected ? 'selected' : ''}>${o.label}</option>`).join('')}
+            </select>
+        </div>`;
+    }
+
+    document.getElementById('excelMappingRow').innerHTML = html;
+    document.getElementById('excelColumnMapping').style.display = 'block';
+}
+
+function onMappingChange(colIdx, value) {
+    excelColumnMap[colIdx] = value;
+    renderExcelPreview();
+}
+
+function renderExcelPreview() {
+    const hasHeader = document.getElementById('excelHasHeader').checked;
+    const startRow = hasHeader ? 1 : 0;
+    const previewRows = excelSheetData.slice(startRow, startRow + 5);
+
+    if (previewRows.length === 0) {
+        document.getElementById('excelPreview').style.display = 'none';
+        document.getElementById('excelImportBtn').style.display = 'none';
+        return;
+    }
+
+    // Build mapped preview
+    const cols = ['item', 'qty', 'unit', 'price'];
+    const colLabels = { item: '품목명', qty: '월 사용량', unit: '단위', price: '현재 단가' };
+    const mappedCols = [];
+    for (const [idx, val] of Object.entries(excelColumnMap)) {
+        if (val !== 'skip') mappedCols.push({ colIdx: parseInt(idx), field: val });
+    }
+
+    let html = '<thead><tr>';
+    mappedCols.forEach(mc => { html += `<th>${colLabels[mc.field]}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    let validCount = 0;
+    const totalRows = excelSheetData.length - (hasHeader ? 1 : 0);
+    previewRows.forEach(row => {
+        html += '<tr>';
+        let hasItem = false;
+        mappedCols.forEach(mc => {
+            const val = row[mc.colIdx] !== undefined ? row[mc.colIdx] : '';
+            html += `<td>${escHtml(String(val))}</td>`;
+            if (mc.field === 'item' && String(val).trim()) hasItem = true;
+        });
+        html += '</tr>';
+        if (hasItem) validCount++;
+    });
+    html += '</tbody>';
+
+    document.getElementById('excelPreviewTable').innerHTML = html;
+    document.getElementById('excelPreview').style.display = 'block';
+    document.getElementById('excelPreviewInfo').textContent =
+        `총 ${totalRows}행 중 미리보기 ${previewRows.length}행 표시`;
+    document.getElementById('excelImportBtn').style.display = 'inline-flex';
+}
+
+// Listen for header checkbox change
+document.getElementById('excelHasHeader').addEventListener('change', renderExcelPreview);
+
+function doExcelImport() {
+    const partnerName = document.getElementById('excelPartnerName').value.trim();
+    const partnerType = document.getElementById('excelPartnerType').value;
+
+    if (!partnerName) { alert('파트너명을 입력해주세요.'); return; }
+
+    // Check if item column is mapped
+    const mappedCols = {};
+    for (const [idx, val] of Object.entries(excelColumnMap)) {
+        if (val !== 'skip') mappedCols[val] = parseInt(idx);
+    }
+    if (mappedCols.item === undefined) {
+        alert('품목명 열을 매핑해주세요.');
+        return;
+    }
+
+    const hasHeader = document.getElementById('excelHasHeader').checked;
+    const startRow = hasHeader ? 1 : 0;
+    const dataRows = excelSheetData.slice(startRow);
+
+    const items = [];
+    dataRows.forEach(row => {
+        const itemName = String(row[mappedCols.item] || '').trim();
+        if (!itemName) return;
+
+        const qty = mappedCols.qty !== undefined ? (parseFloat(row[mappedCols.qty]) || '') : '';
+        const unit = mappedCols.unit !== undefined ? (String(row[mappedCols.unit] || '').trim() || 'L') : 'L';
+        const price = mappedCols.price !== undefined ? (parseFloat(row[mappedCols.price]) || '') : '';
+
+        // Normalize unit
+        const validUnits = ['L', 'kg', '개', '박스', '포', '팩', '병', '캔'];
+        const normalizedUnit = validUnits.find(u => unit.includes(u)) || 'L';
+
+        items.push({ item: itemName, qty, unit: normalizedUnit, price });
+    });
+
+    if (items.length === 0) {
+        alert('가져올 데이터가 없습니다. 열 매핑을 확인해주세요.');
+        return;
+    }
+
+    // Check if partner exists
+    let existingIdx = partners.findIndex(p => p.name === partnerName);
+    if (existingIdx >= 0) {
+        if (!confirm(`'${partnerName}' 파트너가 이미 있습니다. 기존 데이터에 추가할까요?`)) return;
+        partners[existingIdx].items = partners[existingIdx].items
+            .filter(i => i.item) // remove empty rows
+            .concat(items);
+    } else {
+        partners.push({ name: partnerName, type: partnerType, items });
+        existingIdx = partners.length - 1;
+    }
+
+    saveData();
+    closeModal('modalExcelImport');
+    refreshAll();
+    selectPartner(existingIdx >= 0 ? existingIdx : partners.length - 1);
+    showToast(`${items.length}개 품목을 '${partnerName}'에 가져왔습니다!`);
+}
+
+// ===== PASSWORD / LOCK =====
+function simpleHash(str) {
+    // Simple hash for local protection (not cryptographic security)
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return 'shupa_' + Math.abs(hash).toString(36);
+}
+
+function unlockApp() {
+    const input = document.getElementById('lockPasswordInput');
+    const pw = input.value;
+    const stored = localStorage.getItem('shupa_password');
+
+    if (!pw) { document.getElementById('lockError').textContent = '비밀번호를 입력해주세요.'; return; }
+
+    if (simpleHash(pw) === stored) {
+        document.getElementById('lockScreen').style.display = 'none';
+        input.value = '';
+        document.getElementById('lockError').textContent = '';
+        initApp();
+    } else {
+        document.getElementById('lockError').textContent = '비밀번호가 틀렸습니다.';
+        input.value = '';
+        input.focus();
+    }
+}
+
+function lockApp() {
+    const hasPassword = localStorage.getItem('shupa_password');
+    if (!hasPassword) {
+        alert('먼저 비밀번호를 설정해주세요. (데이터 관리 → 비밀번호 설정)');
+        return;
+    }
+    // Clear sensitive data from DOM
+    partners = [];
+    currentPartnerIdx = -1;
+    refreshAll();
+    document.getElementById('lockScreen').style.display = 'flex';
+    setTimeout(() => document.getElementById('lockPasswordInput').focus(), 100);
+    showToast('잠금되었습니다.');
+}
+
+function openPasswordSetup() {
+    document.getElementById('setupPassword1').value = '';
+    document.getElementById('setupPassword2').value = '';
+    document.getElementById('setupPasswordError').textContent = '';
+    closeModal('modalDataMgmt');
+    openModal('modalPassword');
+    setTimeout(() => document.getElementById('setupPassword1').focus(), 100);
+}
+
+function savePassword() {
+    const pw1 = document.getElementById('setupPassword1').value;
+    const pw2 = document.getElementById('setupPassword2').value;
+    const err = document.getElementById('setupPasswordError');
+
+    if (!pw1) { err.textContent = '비밀번호를 입력해주세요.'; return; }
+    if (pw1.length < 4) { err.textContent = '4자리 이상 입력해주세요.'; return; }
+    if (pw1 !== pw2) { err.textContent = '비밀번호가 일치하지 않습니다.'; return; }
+
+    localStorage.setItem('shupa_password', simpleHash(pw1));
+    closeModal('modalPassword');
+    updatePasswordUI();
+    showToast('비밀번호가 설정되었습니다! 다음에 열 때부터 비밀번호를 입력해야 합니다.');
+}
+
+function removePassword() {
+    if (!confirm('비밀번호를 해제하시겠습니까? 누구나 데이터를 볼 수 있게 됩니다.')) return;
+    localStorage.removeItem('shupa_password');
+    updatePasswordUI();
+    showToast('비밀번호가 해제되었습니다.');
+}
+
+function updatePasswordUI() {
+    const hasPassword = localStorage.getItem('shupa_password');
+    const btn = document.getElementById('btnRemovePassword');
+    if (btn) btn.style.display = hasPassword ? 'inline-flex' : 'none';
+}
+
+// ===== PRESENT MODE =====
+function openPresentMode() {
+    if (partners.length === 0) {
+        alert('표시할 파트너가 없습니다. 먼저 파트너를 등록해주세요.');
+        return;
+    }
+    const sel = document.getElementById('presentPartnerSelect');
+    sel.innerHTML = partners.map(p =>
+        `<option value="${escHtml(p.name)}">${escHtml(p.name)} (${p.type})</option>`
+    ).join('');
+    openModal('modalPresent');
+}
+
+function startPresentMode() {
+    const sel = document.getElementById('presentPartnerSelect');
+    const pName = sel.value;
+    if (!pName) return;
+
+    presentModePartner = pName;
+    document.body.classList.add('present-mode');
+    document.getElementById('presentPartnerName').textContent = pName;
+    closeModal('modalPresent');
+
+    // Switch to analysis page with this partner selected
+    showPage('analysis');
+    showAnalysisTab('partner');
+    document.getElementById('reportPartnerSelect').value = pName;
+    renderPartnerReport();
+
+    showToast(`발표 모드: '${pName}' 데이터만 표시됩니다.`);
+}
+
+function exitPresentMode() {
+    presentModePartner = null;
+    document.body.classList.remove('present-mode');
+    renderAnalysis();
+    showToast('발표 모드가 종료되었습니다.');
+}
+
+// Override renderAnalysis to respect present mode
+const _originalRenderAnalysis = renderAnalysis;
+renderAnalysis = function() {
+    const sel = document.getElementById('reportPartnerSelect');
+    const prev = sel.value;
+
+    if (presentModePartner) {
+        // Only show the presenting partner
+        sel.innerHTML = `<option value="${escHtml(presentModePartner)}">${escHtml(presentModePartner)}</option>`;
+        sel.value = presentModePartner;
+    } else {
+        sel.innerHTML = '<option value="">-- 파트너를 선택하세요 --</option>';
+        partners.forEach(p => {
+            sel.innerHTML += `<option value="${escHtml(p.name)}">${escHtml(p.name)} (${p.type})</option>`;
+        });
+        if (prev) sel.value = prev;
+    }
+    renderPartnerReport();
+    renderSupplierReport();
+};
+
+// Override renderSupplierReport to respect present mode
+const _originalRenderSupplierReport = renderSupplierReport;
+renderSupplierReport = function() {
+    if (presentModePartner) {
+        // In present mode, hide supplier report (it shows all partners' data)
+        document.getElementById('supplierReportArea').innerHTML = `<div class="empty-state">
+            <div class="empty-icon">🔒</div>
+            <h3>발표 모드에서는 숨김 처리됩니다</h3>
+            <p>전체 파트너 데이터가 포함된 보고서는 발표 모드에서 표시되지 않습니다.</p>
+        </div>`;
+        return;
+    }
+    _originalRenderSupplierReport();
+};
+</script>
+
+</body>
+</html>
