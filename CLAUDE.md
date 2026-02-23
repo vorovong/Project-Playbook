@@ -109,11 +109,17 @@
 3. **목적과 요구사항이 명확해지면**, `mini-projects/` 하위에 새 폴더를 생성합니다.
 4. **계획을 세우고 실행합니다** (이 CLAUDE.md의 안내 하에).
 
-### 미니 프로젝트 폴더 구조
+### 레포 폴더 규칙
+
+파일을 생성하거나 이동할 때 반드시 이 구조를 따릅니다:
+
 ```
-mini-projects/
-  프로젝트-이름/
-    (결과 파일들)
+mini-projects/{이름}/          ← 미니 프로젝트 결과물
+progress/{이름}/               ← 진행 기록
+docs/case-studies/             ← 케이스 스터디
+docs/digest/                   ← 팀 다이제스트
+docs/guides/                   ← 가이드 문서
+docs/templates/                ← 템플릿
 ```
 
 ---
