@@ -17,5 +17,5 @@ progress/
 
 1. **자기 이름으로 폴더**를 만드세요
 2. 폴더 안에 **프로젝트별 파일**을 만드세요 (파일 이름 = 프로젝트 이름)
-3. `templates/progress-template.md`를 복사해서 시작하세요
-4. 미니 프로젝트가 끝나면 `case-studies/` 폴더에 케이스 스터디도 올려주세요
+3. `docs/templates/progress-template.md`를 복사해서 시작하세요
+4. 미니 프로젝트가 끝나면 `docs/case-studies/` 폴더에 케이스 스터디도 올려주세요

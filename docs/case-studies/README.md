@@ -12,5 +12,5 @@
 
 ## 작성법
 
-1. `templates/case-study-template.md`를 참고하세요
+1. `docs/templates/case-study-template.md`를 참고하세요
 2. 클로드 코드에게 "케이스 스터디 작성해줘"라고 하면 대화 기록 기반으로 초안을 잡아줍니다
