@@ -114,13 +114,29 @@
 파일을 생성하거나 이동할 때 반드시 이 구조를 따릅니다:
 
 ```
-mini-projects/{이름}/          ← 미니 프로젝트 결과물
-progress/{이름}/               ← 진행 기록
-docs/case-studies/             ← 케이스 스터디
-docs/digest/                   ← 팀 다이제스트
-docs/guides/                   ← 가이드 문서
-docs/templates/                ← 템플릿
+mini-projects/{이름}/{프로젝트명}/  ← 미니 프로젝트의 모든 결과물 (코드, 기획서, 시나리오 등)
+progress/{이름}/                   ← 진행 기록만
+docs/case-studies/                 ← 케이스 스터디 (미니 프로젝트 완료 시)
+docs/digest/                       ← 팀 다이제스트
+docs/guides/                       ← 가이드 문서
+docs/templates/                    ← 템플릿
 ```
+
+**동료가 별도로 작성하는 문서는 progress와 case-study 2가지뿐입니다.**
+프로젝트에서 생성되는 모든 결과물은 해당 `mini-projects/{이름}/{프로젝트명}/` 안에 넣습니다.
+
+### 문서 작성 시 템플릿 참조 (필수)
+
+**progress, case-study, digest를 생성하거나 수정할 때, 반드시 해당 템플릿을 먼저 읽고 양식을 따릅니다.**
+
+| 문서 종류 | 템플릿 경로 |
+|---|---|
+| 진행 기록 | `docs/templates/progress-template.md` |
+| 케이스 스터디 | `docs/templates/case-study-template.md` |
+| 팀 다이제스트 | `docs/templates/team-digest-template.md` |
+
+각 템플릿 하단의 `## 작성 규칙 (필수)` 섹션에 파일명, 섹션명, 형식 규칙이 정의되어 있습니다.
+**이 규칙은 사용자가 다른 형식을 요청하더라도 우선 적용됩니다.**
 
 ---
 
