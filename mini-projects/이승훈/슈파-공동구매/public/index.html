@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>슈파 관리자</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, '맑은 고딕', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    /* 상단 헤더 */
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header .subtitle { font-size: 13px; color: #95a5a6; }
+
+    /* 메인 레이아웃 */
+    .main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+
+    /* 카드 */
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    /* 폼 */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .form-group input, .form-group select {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    /* 이미지 업로드 영역 */
+    .image-upload-area {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .image-dropzone {
+      width: 160px;
+      height: 160px;
+      border: 2px dashed #ddd;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .image-dropzone:hover { border-color: #3498db; background: #f0f7ff; }
+    .image-dropzone.has-image { border-style: solid; border-color: #3498db; }
+    .image-dropzone img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .dropzone-placeholder {
+      text-align: center;
+      color: #999;
+    }
+    .dropzone-placeholder .icon { font-size: 32px; margin-bottom: 8px; }
+    .dropzone-placeholder .text { font-size: 12px; }
+    .image-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+    }
+    .image-info .label { font-size: 13px; font-weight: 600; color: #555; }
+    .image-info .hint { font-size: 12px; color: #999; }
+    .image-info .btn-remove {
+      padding: 4px 12px;
+      font-size: 12px;
+      background: #f8d7da;
+      color: #721c24;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+    .image-info .btn-remove:hover { background: #f5c6cb; }
+
+    /* 버튼 */
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: #3498db; color: white; }
+    .btn-primary:hover { background: #2980b9; }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-secondary { background: #95a5a6; color: white; }
+    .btn-secondary:hover { background: #7f8c8d; }
+    .btn-small { padding: 6px 14px; font-size: 12px; }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    /* 테이블 */
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left;
+      padding: 12px;
+      background: #f8f9fa;
+      font-size: 13px;
+      color: #555;
+      border-bottom: 2px solid #eee;
+    }
+    td {
+      padding: 12px;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    tr:hover { background: #f8f9fa; }
+
+    /* 상품 이미지 (목록에서) */
+    .product-thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #f0f0f0;
+    }
+    .product-thumb-empty {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #ccc;
+    }
+
+    /* 상태 뱃지 */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-active { background: #d4edda; color: #155724; }
+    .badge-ended { background: #f8d7da; color: #721c24; }
+
+    /* 가격 */
+    .price { font-weight: 600; color: #2c3e50; }
+    .market-price { font-size: 12px; color: #999; text-decoration: line-through; }
+    .saving { font-size: 12px; color: #27ae60; font-weight: 600; }
+
+    /* 액션 버튼들 */
+    .actions { display: flex; gap: 6px; }
+
+    /* 빈 상태 */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { font-size: 16px; margin-bottom: 4px; }
+    .empty-sub { font-size: 13px; }
+
+    /* 알림 메시지 */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 20px;
+      background: #2ecc71;
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateX(120%);
+      transition: transform 0.3s;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.error { background: #e74c3c; }
+
+    /* 통계 바 */
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .stat-number { font-size: 28px; font-weight: 700; color: #2c3e50; }
+    .stat-label { font-size: 13px; color: #999; margin-top: 4px; }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stats { flex-direction: column; }
+      .image-upload-area { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 헤더 -->
+  <div class="header">
+    <div>
+      <h1>슈파 관리자</h1>
+      <div class="subtitle">공동구매 관리 시스템</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- 통계 카드 -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="totalProducts">0</div>
+        <div class="stat-label">전체 상품</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="activeProducts">0</div>
+        <div class="stat-label">판매중</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="supplierCount">0</div>
+        <div class="stat-label">공급사</div>
+      </div>
+    </div>
+
+    <!-- 상품 등록 폼 -->
+    <div class="card">
+      <h2 id="formTitle">상품 등록</h2>
+      <form id="productForm">
+        <input type="hidden" id="editId">
+        <div class="form-grid">
+
+          <!-- 이미지 업로드 -->
+          <div class="image-upload-area">
+            <div class="image-dropzone" id="imageDropzone" onclick="document.getElementById('imageInput').click()">
+              <div class="dropzone-placeholder" id="dropzonePlaceholder">
+                <div class="icon">📷</div>
+                <div class="text">클릭하여<br>사진 등록</div>
+              </div>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display:none">
+            <div class="image-info">
+              <div class="label">상품 이미지</div>
+              <div class="hint">JPG, PNG 파일 (최대 5MB)<br>정사각형 사진이 가장 보기 좋아요</div>
+              <button type="button" class="btn-remove" id="removeImageBtn" style="display:none" onclick="removeImage()">사진 제거</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>상품명 *</label>
+            <input type="text" id="name" placeholder="예: 청송 사과" required>
+          </div>
+          <div class="form-group">
+            <label>용량 *</label>
+            <input type="text" id="volume" placeholder="예: 10kg" required>
+          </div>
+          <div class="form-group">
+            <label>패키지 단위 *</label>
+            <input type="text" id="package_unit" placeholder="예: 1박스" required>
+          </div>
+          <div class="form-group">
+            <label>가격 (원) *</label>
+            <input type="number" id="price" placeholder="예: 25000" required>
+          </div>
+          <div class="form-group">
+            <label>배송비 *</label>
+            <input type="text" id="shipping_fee" placeholder="예: 3000 또는 직접배송" required>
+          </div>
+          <div class="form-group">
+            <label>공급사 *</label>
+            <input type="text" id="supplier" placeholder="예: ○○농장" required>
+          </div>
+          <div class="form-group">
+            <label>주문 마감시간</label>
+            <input type="text" id="order_deadline" placeholder="15:00" value="15:00">
+          </div>
+          <div class="form-group">
+            <label>시중가격 (원)</label>
+            <input type="number" id="market_price" placeholder="비교용 시중가격">
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelBtn" style="display:none" onclick="cancelEdit()">취소</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn">상품 등록</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 상품 목록 -->
+    <div class="card">
+      <h2>상품 목록</h2>
+      <div id="productList"></div>
+    </div>
+
+  </div>
+
+  <!-- 알림 메시지 -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api/products';
+    let selectedImageFile = null; // 현재 선택된 이미지 파일
+
+    // ──────────────────────────────────────
+    // 이미지 업로드 처리
+    // ──────────────────────────────────────
+    const imageInput = document.getElementById('imageInput');
+    const dropzone = document.getElementById('imageDropzone');
+    const placeholder = document.getElementById('dropzonePlaceholder');
+    const removeBtn = document.getElementById('removeImageBtn');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('이미지 크기가 5MB를 초과합니다', true);
+        return;
+      }
+
+      selectedImageFile = file;
+      showImagePreview(URL.createObjectURL(file));
+    });
+
+    // 드래그 앤 드롭도 지원
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#3498db';
+      dropzone.style.background = '#f0f7ff';
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.borderColor = '';
+      dropzone.style.background = '';
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '';
+      dropzone.style.background = '';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('이미지 크기가 5MB를 초과합니다', true);
+          return;
+        }
+        selectedImageFile = file;
+        imageInput.files = e.dataTransfer.files;
+        showImagePreview(URL.createObjectURL(file));
+      }
+    });
+
+    function showImagePreview(src) {
+      dropzone.innerHTML = `<img src="${src}" alt="미리보기">`;
+      dropzone.classList.add('has-image');
+      removeBtn.style.display = '';
+    }
+
+    function removeImage() {
+      selectedImageFile = null;
+      imageInput.value = '';
+      dropzone.innerHTML = `
+        <div class="dropzone-placeholder" id="dropzonePlaceholder">
+          <div class="icon">📷</div>
+          <div class="text">클릭하여<br>사진 등록</div>
+        </div>
+      `;
+      dropzone.classList.remove('has-image');
+      removeBtn.style.display = 'none';
+    }
+
+    // ──────────────────────────────────────
+    // 상품 목록 불러오기
+    // ──────────────────────────────────────
+    async function loadProducts() {
+      const res = await fetch(API);
+      const products = await res.json();
+
+      // 통계 업데이트
+      document.getElementById('totalProducts').textContent = products.length;
+      document.getElementById('activeProducts').textContent =
+        products.filter(p => p.status === '판매중').length;
+      document.getElementById('supplierCount').textContent =
+        new Set(products.map(p => p.supplier)).size;
+
+      // 목록 표시
+      const container = document.getElementById('productList');
+
+      if (products.length === 0) {
+        container.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">📦</div>
+            <div class="empty-text">등록된 상품이 없습니다</div>
+            <div class="empty-sub">위 폼에서 첫 번째 상품을 등록해보세요!</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>사진</th>
+                <th>상품명</th>
+                <th>용량/단위</th>
+                <th>가격</th>
+                <th>배송비</th>
+                <th>공급사</th>
+                <th>마감</th>
+                <th>상태</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${products.map(p => `
+                <tr>
+                  <td>
+                    ${p.image
+                      ? `<img class="product-thumb" src="${esc(p.image)}" alt="${esc(p.name)}">`
+                      : `<div class="product-thumb-empty">📷</div>`
+                    }
+                  </td>
+                  <td><strong>${esc(p.name)}</strong></td>
+                  <td>${esc(p.volume)} (${esc(p.package_unit)})</td>
+                  <td>
+                    <div class="price">${formatPrice(p.price)}원</div>
+                    ${p.market_price > 0 ? `
+                      <div class="market-price">${formatPrice(p.market_price)}원</div>
+                      <div class="saving">${Math.round((1 - p.price / p.market_price) * 100)}% 절감</div>
+                    ` : ''}
+                  </td>
+                  <td>${esc(p.shipping_fee)}</td>
+                  <td>${esc(p.supplier)}</td>
+                  <td>${esc(p.order_deadline)}</td>
+                  <td>
+                    <span class="badge ${p.status === '판매중' ? 'badge-active' : 'badge-ended'}">${esc(p.status)}</span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn btn-primary btn-small" onclick="editProduct(${p.id})">수정</button>
+                      <button class="btn btn-danger btn-small" onclick="deleteProduct(${p.id}, '${esc(p.name)}')">삭제</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // ──────────────────────────────────────
+    // 상품 등록/수정 (FormData로 이미지 포함 전송)
+    // ──────────────────────────────────────
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append('name', document.getElementById('name').value.trim());
+      formData.append('volume', document.getElementById('volume').value.trim());
+      formData.append('package_unit', document.getElementById('package_unit').value.trim());
+      formData.append('price', document.getElementById('price').value);
+      formData.append('shipping_fee', document.getElementById('shipping_fee').value.trim());
+      formData.append('supplier', document.getElementById('supplier').value.trim());
+      formData.append('order_deadline', document.getElementById('order_deadline').value.trim() || '15:00');
+      formData.append('market_price', document.getElementById('market_price').value || '0');
+
+      // 이미지가 선택되어 있으면 첨부
+      if (selectedImageFile) {
+        formData.append('image', selectedImageFile);
+      }
+
+      const editId = document.getElementById('editId').value;
+
+      if (editId) {
+        // 수정
+        await fetch(`${API}/${editId}`, { method: 'PUT', body: formData });
+        showToast('상품이 수정되었습니다');
+        cancelEdit();
+      } else {
+        // 등록
+        await fetch(API, { method: 'POST', body: formData });
+        showToast('상품이 등록되었습니다!');
+      }
+
+      document.getElementById('productForm').reset();
+      document.getElementById('order_deadline').value = '15:00';
+      removeImage();
+      loadProducts();
+    });
+
+    // ──────────────────────────────────────
+    // 상품 수정 모드
+    // ──────────────────────────────────────
+    async function editProduct(id) {
+      const res = await fetch(`${API}/${id}`);
+      const p = await res.json();
+
+      document.getElementById('editId').value = p.id;
+      document.getElementById('name').value = p.name;
+      document.getElementById('volume').value = p.volume;
+      document.getElementById('package_unit').value = p.package_unit;
+      document.getElementById('price').value = p.price;
+      document.getElementById('shipping_fee').value = p.shipping_fee;
+      document.getElementById('supplier').value = p.supplier;
+      document.getElementById('order_deadline').value = p.order_deadline;
+      document.getElementById('market_price').value = p.market_price || '';
+
+      // 기존 이미지가 있으면 미리보기 표시
+      if (p.image) {
+        showImagePreview(p.image);
+      } else {
+        removeImage();
+      }
+
+      document.getElementById('formTitle').textContent = '상품 수정';
+      document.getElementById('submitBtn').textContent = '수정 완료';
+      document.getElementById('cancelBtn').style.display = '';
+
+      // 폼으로 스크롤
+      document.getElementById('productForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+      document.getElementById('editId').value = '';
+      document.getElementById('formTitle').textContent = '상품 등록';
+      document.getElementById('submitBtn').textContent = '상품 등록';
+      document.getElementById('cancelBtn').style.display = 'none';
+      document.getElementById('productForm').reset();
+      document.getElementById('order_deadline').value = '15:00';
+      removeImage();
+    }
+
+    // ──────────────────────────────────────
+    // 상품 삭제
+    // ──────────────────────────────────────
+    async function deleteProduct(id, name) {
+      if (!confirm(`"${name}" 상품을 삭제하시겠습니까?`)) return;
+
+      await fetch(`${API}/${id}`, { method: 'DELETE' });
+      showToast('상품이 삭제되었습니다');
+      loadProducts();
+    }
+
+    // ──────────────────────────────────────
+    // 유틸리티
+    // ──────────────────────────────────────
+    function formatPrice(n) {
+      return n.toLocaleString('ko-KR');
+    }
+
+    function esc(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show' + (isError ? ' error' : '');
+      setTimeout(() => { toast.className = 'toast'; }, 3000);
+    }
+
+    // 페이지 로드 시 상품 목록 불러오기
+    loadProducts();
+  </script>
+
+</body>
+</html>

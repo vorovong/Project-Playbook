@@ -1,0 +1,6 @@
+node_modules/
+shupa.db
+shupa.db-wal
+shupa.db-shm
+public/uploads/*
+!public/uploads/.gitkeep

@@ -1,0 +1,14 @@
+{
+  "name": "shupa-groupbuy",
+  "version": "1.0.0",
+  "description": "슈파 공동구매 관리 시스템",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "express": "^5.2.1",
+    "multer": "^2.0.2"
+  }
+}
