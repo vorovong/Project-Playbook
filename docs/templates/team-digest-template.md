@@ -54,10 +54,14 @@
 4. `## 서로 도울 수 있는 포인트`
 5. `## 플레이북 개선 제안`
 
+### 날짜 기준
+
+progress 파일명의 날짜는 "프로젝트 시작일"이므로, **파일명이 아닌 파일 내용의 날짜 헤더(`## YYYY-MM-DD`)를 기준으로** 해당 날짜의 작업을 찾는다. 하나의 progress 파일 안에 여러 날짜 항목이 있을 수 있다.
+
 ### 생성 방법
 
 민호(리더)가 클로드 코드에게 이렇게 말하세요:
 
-"progress 폴더와 case-studies 폴더의 모든 파일을 읽고,
-docs/templates/team-digest-template.md 양식에 맞춰서
-팀 다이제스트를 만들어줘. docs/digest/ 폴더에 오늘 날짜로 저장하고 git에 올려줘."
+"progress 폴더의 모든 파일을 읽고, 파일 안의 날짜 헤더(## YYYY-MM-DD)에서 해당 날짜 항목을 찾아서,
+docs/templates/team-digest-template.md 양식에 맞춰 팀 다이제스트를 만들어줘.
+docs/digest/ 폴더에 해당 날짜로 저장하고 git에 올려줘."
