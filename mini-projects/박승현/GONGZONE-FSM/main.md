@@ -1,3 +1,21 @@
+---
+type: master
+title: GONGZONE FSM — Full Self Management
+owner: 기린 (박승현)
+company: (주)공존공간
+status: active
+created: 2026-02-24
+last-updated: 2026-02-25
+modules:
+  - operations.md
+  - planning.md
+  - external.md
+  - marketing.md
+  - side-projects.md
+  - writing-style.md
+ai-context: "이 파일은 GONGZONE FSM의 진입점입니다. 업무 요청 시 이 파일을 먼저 읽고, 해당 영역의 모듈 파일을 참조하세요."
+---
+
 # GONGZONE FSM — Full Self Management
 
 ---
@@ -118,15 +136,38 @@ AI는 아래 4대 업무 영역에서 기린을 서포트함.
 
 ---
 
-## 7. 파일 구조
+## 7. 시스템 맵
+
+> AI는 업무 요청을 받으면 이 맵을 보고 어떤 파일을 참조할지 판단한다.
+
+### 7-1. 파일 구조
 
 ```
 GONGZONE-FSM/
-├── main.md              ← 현재 파일. 정체성, 사업구조, 공통 규칙
-├── operations.md        ← 경영관리 (매출, 인사, 계약, 일정)
-├── planning.md          ← 기획 (행사, 콘텐츠, 브랜드)
-├── external.md          ← 대외협력 (정부사업, 파트너십, 미디어)
-├── marketing.md         ← 마케팅 (SNS, 홍보, 고객소통)
-├── side-projects.md     ← 사이드 프로젝트 (행궁동행, 신도시)
-└── writing-style.md     ← 문체 가이드 (공문서, 톤 매뉴얼)
+├── main.md              ← [마스터] 진입점. 정체성, 사업구조, 공통 규칙
+├── operations.md        ← [모듈] 경영관리
+├── planning.md          ← [모듈] 기획
+├── external.md          ← [모듈] 대외협력
+├── marketing.md         ← [모듈] 마케팅
+├── side-projects.md     ← [모듈] 사이드 프로젝트
+└── writing-style.md     ← [공통] 문체 가이드 (모든 모듈에서 참조)
+```
+
+### 7-2. 모듈별 담당 영역
+
+| 모듈 | 핵심 업무 | 이런 요청이 오면 참조 |
+|------|----------|---------------------|
+| `operations.md` | 매출 정리, 인사 소통, 계약 서류, 일정 관리 | "매출 정리해줘", "직원 공지 써줘", "계약서 확인해줘" |
+| `planning.md` | 행사 기획, 콘텐츠 기획, 브랜드 개발 | "행사 기획안 써줘", "콘텐츠 아이디어 내줘" |
+| `external.md` | 정부사업 제안서, 파트너십, 미디어 대응 | "제안서 써줘", "보도자료 만들어줘", "공모사업 찾아줘" |
+| `marketing.md` | SNS 운영, 홍보, 고객 소통 | "인스타 포스트 만들어줘", "홍보 문구 써줘" |
+| `side-projects.md` | 행궁동행(사단법인), 신도시 스핀오프(양조장) | "행궁동행 관련 정리해줘", "양조장 기획 도와줘" |
+| `writing-style.md` | 문체 톤, 공문서 양식, 브랜드별 말투 | 글쓰기 요청 시 항상 함께 참조 |
+
+### 7-3. 참조 규칙
+
+```
+업무 요청 → main.md에서 해당 모듈 확인 → 모듈 파일 참조
+글쓰기 요청 → 해당 모듈 + writing-style.md 함께 참조
+판단 불가 → 기린에게 질문
 ```
