@@ -1,3 +1,6 @@
 .env
 __pycache__/
 *.pyc
+.DS_Store
+.claude/
+mini-projects/ai-news-hub/
