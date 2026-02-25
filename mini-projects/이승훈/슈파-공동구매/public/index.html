@@ -253,10 +253,54 @@
     .stat-number { font-size: 28px; font-weight: 700; color: #2c3e50; }
     .stat-label { font-size: 13px; color: #999; margin-top: 4px; }
 
+    /* 탭 네비게이션 */
+    .tab-bar {
+      background: white;
+      border-bottom: 2px solid #eee;
+      display: flex;
+      overflow-x: auto;
+      padding: 0 24px;
+    }
+    .tab-btn {
+      padding: 14px 20px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #999;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover { color: #555; }
+    .tab-btn.active {
+      color: #2c3e50;
+      border-bottom-color: #3498db;
+    }
+    .tab-btn.disabled {
+      color: #ccc;
+      cursor: default;
+    }
+    .tab-btn.disabled:hover { color: #ccc; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* 준비중 안내 */
+    .coming-soon {
+      text-align: center;
+      padding: 80px 20px;
+      color: #999;
+    }
+    .coming-soon-icon { font-size: 48px; margin-bottom: 16px; }
+    .coming-soon-title { font-size: 18px; font-weight: 600; color: #555; margin-bottom: 8px; }
+    .coming-soon-sub { font-size: 14px; }
+
     @media (max-width: 768px) {
       .form-grid { grid-template-columns: 1fr; }
       .stats { flex-direction: column; }
       .image-upload-area { flex-direction: column; align-items: center; }
+      .tab-btn { padding: 12px 14px; font-size: 13px; }
     }
   </style>
 </head>
@@ -270,7 +314,20 @@
     </div>
   </div>
 
+  <!-- 탭 메뉴 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('products')">상품관리</button>
+    <button class="tab-btn disabled" onclick="switchTab('orders')">주문관리</button>
+    <button class="tab-btn disabled" onclick="switchTab('purchase-orders')">발주서</button>
+    <button class="tab-btn disabled" onclick="switchTab('settlement')">정산</button>
+    <button class="tab-btn disabled" onclick="switchTab('requests')">상품요청</button>
+    <button class="tab-btn disabled" onclick="switchTab('claims')">클레임</button>
+  </div>
+
   <div class="main">
+
+    <!-- ==================== 상품관리 탭 ==================== -->
+    <div class="tab-content active" id="tab-products">
 
     <!-- 통계 카드 -->
     <div class="stats">
@@ -357,6 +414,63 @@
       <div id="productList"></div>
     </div>
 
+    </div><!-- /tab-products -->
+
+    <!-- ==================== 주문관리 탭 ==================== -->
+    <div class="tab-content" id="tab-orders">
+      <div class="card">
+        <div class="coming-soon">
+          <div class="coming-soon-icon">📋</div>
+          <div class="coming-soon-title">주문관리</div>
+          <div class="coming-soon-sub">주문 접수, 주문 현황, 배송 상태 관리가 여기에 들어옵니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 발주서 탭 ==================== -->
+    <div class="tab-content" id="tab-purchase-orders">
+      <div class="card">
+        <div class="coming-soon">
+          <div class="coming-soon-icon">📄</div>
+          <div class="coming-soon-title">발주서</div>
+          <div class="coming-soon-sub">마감 후 공급사별 발주서를 자동 생성합니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 정산 탭 ==================== -->
+    <div class="tab-content" id="tab-settlement">
+      <div class="card">
+        <div class="coming-soon">
+          <div class="coming-soon-icon">💰</div>
+          <div class="coming-soon-title">정산</div>
+          <div class="coming-soon-sub">주별 정산 안내, 입금 확인, 계산서 관리가 여기에 들어옵니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 상품요청 탭 ==================== -->
+    <div class="tab-content" id="tab-requests">
+      <div class="card">
+        <div class="coming-soon">
+          <div class="coming-soon-icon">💬</div>
+          <div class="coming-soon-title">상품요청</div>
+          <div class="coming-soon-sub">고객이 요청한 상품과 수요 집계가 여기에 들어옵니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 클레임 탭 ==================== -->
+    <div class="tab-content" id="tab-claims">
+      <div class="card">
+        <div class="coming-soon">
+          <div class="coming-soon-icon">⚠️</div>
+          <div class="coming-soon-title">클레임</div>
+          <div class="coming-soon-sub">품질 클레임 접수, 처리 현황, 공급사별 불량률이 여기에 들어옵니다</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- 알림 메시지 -->
@@ -365,6 +479,7 @@
   <script>
     const API = '/api/products';
     let selectedImageFile = null; // 현재 선택된 이미지 파일
+    let productsData = []; // 상품 데이터 보관 (이름에 특수문자 있어도 안전하게)
 
     // ──────────────────────────────────────
     // 이미지 업로드 처리
@@ -438,6 +553,7 @@
     async function loadProducts() {
       const res = await fetch(API);
       const products = await res.json();
+      productsData = products; // 데이터 보관
 
       // 통계 업데이트
       document.getElementById('totalProducts').textContent = products.length;
@@ -503,7 +619,7 @@
                   <td>
                     <div class="actions">
                       <button class="btn btn-primary btn-small" onclick="editProduct(${p.id})">수정</button>
-                      <button class="btn btn-danger btn-small" onclick="deleteProduct(${p.id}, '${esc(p.name)}')">삭제</button>
+                      <button class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">삭제</button>
                     </div>
                   </td>
                 </tr>
@@ -599,7 +715,9 @@
     // ──────────────────────────────────────
     // 상품 삭제
     // ──────────────────────────────────────
-    async function deleteProduct(id, name) {
+    async function deleteProduct(id) {
+      const product = productsData.find(p => p.id === id);
+      const name = product ? product.name : '이 상품';
       if (!confirm(`"${name}" 상품을 삭제하시겠습니까?`)) return;
 
       await fetch(`${API}/${id}`, { method: 'DELETE' });
@@ -625,6 +743,24 @@
       toast.textContent = msg;
       toast.className = 'toast show' + (isError ? ' error' : '');
       setTimeout(() => { toast.className = 'toast'; }, 3000);
+    }
+
+    // ──────────────────────────────────────
+    // 탭 전환
+    // ──────────────────────────────────────
+    function switchTab(tabName) {
+      // disabled 탭은 무시
+      const clickedBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`);
+      if (clickedBtn && clickedBtn.classList.contains('disabled')) return;
+
+      // 모든 탭 버튼/내용 비활성화
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      // 선택한 탭 활성화
+      if (clickedBtn) clickedBtn.classList.add('active');
+      const tabContent = document.getElementById('tab-' + tabName);
+      if (tabContent) tabContent.classList.add('active');
     }
 
     // 페이지 로드 시 상품 목록 불러오기

@@ -108,7 +108,7 @@ app.put('/api/products/:id', upload.single('image'), (req, res) => {
     shipping_fee || existing.shipping_fee,
     supplier || existing.supplier,
     order_deadline || existing.order_deadline,
-    parseInt(market_price) ?? existing.market_price,
+    parseInt(market_price) || existing.market_price,
     image,
     status || existing.status,
     req.params.id
