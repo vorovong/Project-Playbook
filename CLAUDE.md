@@ -44,6 +44,7 @@
 1. `mini-projects/{이름}/`과 `progress/{이름}/` 폴더를 확인하여 프로젝트 이력 파악
 2. memory 파일에서 해당 사용자의 기록 확인
 3. 이력 기반으로 Phase 판단
+4. **개인 FSM이 있으면** (`mini-projects/{이름}/GIRIN-FSM/commands.md` 등) 해당 commands.md를 읽고 항상 적용. 개인 FSM에 정의된 로드 규칙, 페르소나, 세션 규칙은 세션 시작 경로(명령어, 자동 연결 등)와 관계없이 최우선 실행
 
 신규 멤버(폴더 없음)는 Phase 1에서 시작합니다.
 
