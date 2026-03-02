@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .DS_Store
 .claude/
+node_modules/
 mini-projects/ai-news-hub/
