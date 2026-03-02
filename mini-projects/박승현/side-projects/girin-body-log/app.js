@@ -1,11 +1,5 @@
 // === GIRIN BODY LOG — App v2 ===
 
-const MEMBERS = {
-  girin: { name: '기린 (박승현)', short: '기린' },
-  minho: { name: '김민호', short: '민호' },
-  seunghun: { name: '이승훈', short: '승훈' }
-};
-
 const START_DATE = new Date('2026-02-24');
 
 // === 운동별 맞춤 수치 정의 ===
@@ -177,87 +171,203 @@ const DEFAULT_FIELDS = [
   { key: 'time', label: '시간 (분)', unit: '분' }
 ];
 
-let currentMember = 'girin';
-let trainerSelectedMember = 'girin';
+let currentMember = null;
 let charts = {};
 let exerciseCounter = 0;
 
+// === PWA Service Worker ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// === 사용자 관리 ===
+function getAllUsers() {
+  return JSON.parse(localStorage.getItem('bodylog_users') || '[]');
+}
+
+function saveUser(userId, pin) {
+  const users = getAllUsers();
+  if (!users.find(u => u.id === userId)) {
+    users.push({ id: userId, pin });
+    localStorage.setItem('bodylog_users', JSON.stringify(users));
+  }
+}
+
+function findUserByPin(pin) {
+  return getAllUsers().find(u => u.pin === pin) || null;
+}
+
 // === 초기화 ===
 document.addEventListener('DOMContentLoaded', () => {
-  checkProfile();
+  initPinScreen();
+  initProfileModal();
+
+  const savedSession = localStorage.getItem('bodylog_session');
+  if (savedSession) {
+    currentMember = savedSession;
+    enterApp();
+  } else {
+    showPinScreen();
+  }
+});
+
+function showPinScreen() {
+  document.getElementById('pin-screen').style.display = 'flex';
+  document.getElementById('profile-modal').style.display = 'none';
+  document.getElementById('app-container').style.display = 'none';
+  const pinInput = document.getElementById('pin-input');
+  if (pinInput) { pinInput.value = ''; pinInput.focus(); }
+}
+
+function initPinScreen() {
+  document.getElementById('pin-login-btn').addEventListener('click', handlePinLogin);
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handlePinLogin();
+  });
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    localStorage.removeItem('bodylog_session');
+    currentMember = null;
+    showPinScreen();
+  });
+}
+
+function handlePinLogin() {
+  const pin = document.getElementById('pin-input').value.trim();
+  const errorEl = document.getElementById('pin-error');
+
+  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    errorEl.textContent = '4자리 숫자를 입력해주세요';
+    return;
+  }
+
+  const user = findUserByPin(pin);
+  if (user) {
+    currentMember = user.id;
+    localStorage.setItem('bodylog_session', currentMember);
+    errorEl.textContent = '';
+    enterApp();
+  } else {
+    // 새 사용자 → 프로필 등록
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('profile-modal').style.display = 'block';
+    document.getElementById('profile-pin').value = pin;
+    document.getElementById('profile-pin-confirm').value = pin;
+  }
+}
+
+function enterApp() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('profile-modal').style.display = 'none';
+  document.getElementById('app-container').style.display = 'block';
+
+  const profile = JSON.parse(localStorage.getItem(`profile_${currentMember}`) || 'null');
+  const nameEl = document.getElementById('user-display-name');
+  if (nameEl) nameEl.textContent = profile ? profile.name : currentMember;
+
   setTodayDate();
   initTabs();
-  initMemberSelector();
   initConditionSlider();
   initBreakToggle();
   initSaveButton();
   initSmartExercise();
   initProfileModal();
-  initTrainerTab();
   loadTodayRecord();
   updateWeekInfo();
-});
+}
 
 // ==========================================
 // 프로필 시스템
 // ==========================================
-function checkProfile() {
-  const profile = JSON.parse(localStorage.getItem(`profile_${currentMember}`) || 'null');
-  if (!profile) {
-    document.getElementById('profile-modal').style.display = 'block';
-    document.getElementById('app-container').style.display = 'none';
-  } else {
-    document.getElementById('profile-modal').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
-  }
-}
+// checkProfile 제거됨 — PIN 인증으로 대체
 
 function initProfileModal() {
-  document.getElementById('add-medical-btn').addEventListener('click', () => {
-    const container = document.getElementById('medical-fields');
-    const row = document.createElement('div');
-    row.className = 'medical-row';
-    row.innerHTML = `
-      <input type="text" placeholder="항목" class="med-name">
-      <input type="text" placeholder="수치" class="med-value">
-      <input type="text" placeholder="단위" class="med-unit">
-    `;
-    container.appendChild(row);
-  });
+  const addMedBtn = document.getElementById('add-medical-btn');
+  if (addMedBtn) {
+    addMedBtn.addEventListener('click', () => {
+      const container = document.getElementById('medical-fields');
+      const row = document.createElement('div');
+      row.className = 'medical-row';
+      row.innerHTML = `
+        <input type="text" placeholder="항목" class="med-name">
+        <input type="text" placeholder="수치" class="med-value">
+        <input type="text" placeholder="단위" class="med-unit">
+      `;
+      container.appendChild(row);
+    });
+  }
 
   document.getElementById('save-profile-btn').addEventListener('click', saveProfile);
   document.getElementById('edit-profile-btn').addEventListener('click', () => {
     document.getElementById('profile-modal').style.display = 'block';
     fillProfileModal();
   });
+
+  // "더 입력하기" 토글
+  const toggleBtn = document.getElementById('toggle-extra-btn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const extra = document.getElementById('extra-profile');
+      if (extra.style.display === 'none') {
+        extra.style.display = 'block';
+        toggleBtn.textContent = '접기';
+      } else {
+        extra.style.display = 'none';
+        toggleBtn.textContent = '더 입력하기 (선택사항)';
+      }
+    });
+  }
 }
 
 function saveProfile() {
+  const name = document.getElementById('profile-name').value.trim();
+  const weight = document.getElementById('profile-weight').value.trim();
+  const pin = document.getElementById('profile-pin').value.trim();
+  const pinConfirm = document.getElementById('profile-pin-confirm').value.trim();
+
+  if (!name) { alert('이름을 입력해주세요'); return; }
+  if (!weight) { alert('체중을 입력해주세요'); return; }
+  if (pin.length !== 4 || !/^\d{4}$/.test(pin)) { alert('PIN은 4자리 숫자여야 해요'); return; }
+  if (pin !== pinConfirm) { alert('PIN이 일치하지 않아요'); return; }
+
+  // PIN 중복 체크
+  const existingUser = findUserByPin(pin);
+  if (existingUser && existingUser.id !== currentMember) {
+    alert('이미 사용 중인 PIN이에요. 다른 숫자를 선택해주세요');
+    return;
+  }
+
   const medicalChecks = [];
   document.querySelectorAll('#medical-fields .medical-row').forEach(row => {
-    const name = row.querySelector('.med-name').value.trim();
+    const mName = row.querySelector('.med-name').value.trim();
     const value = row.querySelector('.med-value').value.trim();
     const unit = row.querySelector('.med-unit').value.trim();
-    if (name) medicalChecks.push({ name, value, unit });
+    if (mName) medicalChecks.push({ name: mName, value, unit });
   });
 
+  // userId 생성 (이름 기반)
+  const userId = name.replace(/\s/g, '_').toLowerCase();
+  currentMember = userId;
+
   const profile = {
-    name: document.getElementById('profile-name').value.trim(),
+    name: name,
     age: Number(document.getElementById('profile-age').value) || null,
     height: Number(document.getElementById('profile-height').value) || null,
-    weight: Number(document.getElementById('profile-weight').value) || null,
-    conditions: document.getElementById('profile-conditions').value.trim(),
-    familyHistory: document.getElementById('profile-family-history').value.trim(),
-    allergies: document.getElementById('profile-allergies').value.trim(),
+    weight: Number(weight) || null,
+    conditions: (document.getElementById('profile-conditions') || {}).value || '',
+    familyHistory: (document.getElementById('profile-family-history') || {}).value || '',
+    allergies: (document.getElementById('profile-allergies') || {}).value || '',
     medicalChecks: medicalChecks,
-    exerciseHistory: document.getElementById('profile-exercise-history').value.trim(),
-    injuries: document.getElementById('profile-injuries').value.trim(),
+    exerciseHistory: (document.getElementById('profile-exercise-history') || {}).value || '',
+    injuries: (document.getElementById('profile-injuries') || {}).value || '',
     updatedAt: new Date().toISOString()
   };
 
+  // 저장
+  saveUser(userId, pin);
   localStorage.setItem(`profile_${currentMember}`, JSON.stringify(profile));
-  document.getElementById('profile-modal').style.display = 'none';
-  document.getElementById('app-container').style.display = 'block';
+  localStorage.setItem('bodylog_session', currentMember);
+
+  enterApp();
   renderProfileView();
 }
 
@@ -269,11 +379,30 @@ function fillProfileModal() {
   document.getElementById('profile-age').value = profile.age || '';
   document.getElementById('profile-height').value = profile.height || '';
   document.getElementById('profile-weight').value = profile.weight || '';
-  document.getElementById('profile-conditions').value = profile.conditions || '';
-  document.getElementById('profile-family-history').value = profile.familyHistory || '';
-  document.getElementById('profile-allergies').value = profile.allergies || '';
-  document.getElementById('profile-exercise-history').value = profile.exerciseHistory || '';
-  document.getElementById('profile-injuries').value = profile.injuries || '';
+
+  // PIN 채우기
+  const user = getAllUsers().find(u => u.id === currentMember);
+  if (user) {
+    document.getElementById('profile-pin').value = user.pin;
+    document.getElementById('profile-pin-confirm').value = user.pin;
+  }
+
+  // 선택 정보 펼치기
+  const extra = document.getElementById('extra-profile');
+  if (extra) extra.style.display = 'block';
+  const toggleBtn = document.getElementById('toggle-extra-btn');
+  if (toggleBtn) toggleBtn.textContent = '접기';
+
+  const condEl = document.getElementById('profile-conditions');
+  if (condEl) condEl.value = profile.conditions || '';
+  const famEl = document.getElementById('profile-family-history');
+  if (famEl) famEl.value = profile.familyHistory || '';
+  const allerEl = document.getElementById('profile-allergies');
+  if (allerEl) allerEl.value = profile.allergies || '';
+  const exerEl = document.getElementById('profile-exercise-history');
+  if (exerEl) exerEl.value = profile.exerciseHistory || '';
+  const injEl = document.getElementById('profile-injuries');
+  if (injEl) injEl.value = profile.injuries || '';
 
   const container = document.getElementById('medical-fields');
   container.innerHTML = '';
@@ -471,20 +600,9 @@ function collectSmartExercises() {
 // PT 트레이너 탭
 // ==========================================
 function initTrainerTab() {
-  document.querySelectorAll('.trainer-member-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.trainer-member-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      trainerSelectedMember = btn.dataset.trainerMember;
-      renderTrainerProfileSummary();
-      renderTrainerHistory();
-    });
-  });
-
-  document.getElementById('save-trainer-btn').addEventListener('click', saveTrainerNote);
-
-  const trainerDateEl = document.getElementById('trainer-date');
-  if (trainerDateEl) trainerDateEl.textContent = `(${getTodayStr()})`;
+  // PT 트레이너 탭은 현재 숨김 상태. 활성화 시 동적 멤버 목록으로 교체 필요.
+  const saveBtn = document.getElementById('save-trainer-btn');
+  if (saveBtn) saveBtn.addEventListener('click', saveTrainerNote);
 }
 
 function renderTrainerProfileSummary() {
@@ -589,18 +707,7 @@ function initTabs() {
   });
 }
 
-function initMemberSelector() {
-  document.querySelectorAll('.member-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentMember = btn.dataset.member;
-      checkProfile();
-      loadTodayRecord();
-      if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
-    });
-  });
-}
+// initMemberSelector 제거됨 — PIN 인증으로 대체
 
 function initConditionSlider() {
   const slider = document.getElementById('condition');
@@ -741,10 +848,79 @@ function renderDashboard() {
   document.getElementById('avg-condition').textContent = avgCond;
   document.getElementById('avg-sleep').textContent = avgSleep;
 
+  renderInsights(dates, allRecords);
   renderWeightChart(dates, allRecords);
   renderConditionChart(dates, allRecords);
   renderRoutineChart(dates, allRecords);
   renderRecentRecords(dates, allRecords);
+}
+
+function renderInsights(dates, records) {
+  const box = document.getElementById('insights');
+  if (!box) return;
+  if (dates.length < 3) {
+    box.innerHTML = '<div class="insight-item"><span class="insight-neutral">3일 이상 기록하면 인사이트가 나타나요!</span></div>';
+    return;
+  }
+
+  const insights = [];
+  const recent7 = dates.slice(-7);
+  const prev7 = dates.slice(-14, -7);
+
+  // 수면 평균 비교
+  const recentSleep = recent7.map(d => records[d].body.sleepHours).filter(v => v);
+  const prevSleep = prev7.map(d => records[d].body.sleepHours).filter(v => v);
+  if (recentSleep.length >= 3) {
+    const avg = (recentSleep.reduce((a,b) => a+b, 0) / recentSleep.length).toFixed(1);
+    if (prevSleep.length >= 3) {
+      const prevAvg = (prevSleep.reduce((a,b) => a+b, 0) / prevSleep.length).toFixed(1);
+      const diff = (avg - prevAvg).toFixed(1);
+      if (diff > 0) insights.push({ icon: 'up', text: `수면 평균 ${avg}h (+${diff}h) — 좋은 흐름이에요` });
+      else if (diff < 0) insights.push({ icon: 'down', text: `수면 평균 ${avg}h (${diff}h) — 수면이 줄었어요` });
+    } else {
+      insights.push({ icon: 'neutral', text: `최근 수면 평균 ${avg}h` });
+    }
+  }
+
+  // 컨디션 추이
+  const recentCond = recent7.map(d => records[d].body.condition).filter(v => v);
+  if (recentCond.length >= 3) {
+    const avg = (recentCond.reduce((a,b) => a+b, 0) / recentCond.length).toFixed(1);
+    if (avg >= 7) insights.push({ icon: 'up', text: `컨디션 평균 ${avg} — 컨디션 좋네요!` });
+    else if (avg <= 4) insights.push({ icon: 'down', text: `컨디션 평균 ${avg} — 좀 쉬어가는 것도 방법이에요` });
+  }
+
+  // 루틴 달성률
+  if (recent7.length >= 3) {
+    let total = 0, done = 0;
+    recent7.forEach(d => {
+      const w = records[d].workout;
+      total += 3;
+      if (w.morning) done++;
+      if (w.breakDone) done++;
+      if (w.evening) done++;
+    });
+    const rate = Math.round(done / total * 100);
+    if (rate >= 80) insights.push({ icon: 'up', text: `루틴 달성률 ${rate}% — 꾸준하네요!` });
+    else if (rate <= 30) insights.push({ icon: 'down', text: `루틴 달성률 ${rate}% — 아침 루틴부터 하나씩!` });
+    else insights.push({ icon: 'neutral', text: `루틴 달성률 ${rate}%` });
+  }
+
+  // 스트릭
+  const streak = calcStreak(dates);
+  if (streak >= 7) insights.push({ icon: 'up', text: `${streak}일 연속 기록 중 — 대단해요!` });
+  else if (streak === 0) insights.push({ icon: 'down', text: `오늘 아직 기록 안 했어요` });
+
+  if (!insights.length) {
+    box.innerHTML = '';
+    return;
+  }
+
+  const iconMap = { up: '↑', down: '↓', neutral: '→' };
+  const classMap = { up: 'insight-up', down: 'insight-down', neutral: 'insight-neutral' };
+  box.innerHTML = insights.map(i =>
+    `<div class="insight-item"><span class="insight-icon ${classMap[i.icon]}">${iconMap[i.icon]}</span><span>${i.text}</span></div>`
+  ).join('');
 }
 
 function calcStreak(dates) {
@@ -830,14 +1006,18 @@ function renderGuild() {
   if (!grid || !ranking) return;
 
   const memberData = [];
-  Object.keys(MEMBERS).forEach(id => {
+  getAllUsers().forEach(user => {
+    const id = user.id;
+    const profile = JSON.parse(localStorage.getItem(`profile_${id}`) || 'null');
+    const name = profile ? profile.name : id;
+    const short = name.length > 4 ? name.slice(0, 4) : name;
     const records = JSON.parse(localStorage.getItem(`bodylog_${id}`) || '{}');
     const dates = Object.keys(records).sort();
     const streak = calcStreak(dates);
     const total = dates.length;
     const latest = dates.length ? records[dates[dates.length - 1]] : null;
     const cond = latest ? latest.body.condition : null;
-    memberData.push({ id, ...MEMBERS[id], streak, total, cond, lastDate: dates.length ? dates[dates.length - 1] : '기록 없음', weekScore: calcWeekScore(dates, records) });
+    memberData.push({ id, name, short, streak, total, cond, lastDate: dates.length ? dates[dates.length - 1] : '기록 없음', weekScore: calcWeekScore(dates, records) });
   });
 
   grid.innerHTML = memberData.map(m => {

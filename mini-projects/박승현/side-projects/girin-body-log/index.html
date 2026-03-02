@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GIRIN BODY LOG</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6c5ce7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,86 +17,106 @@
   <div id="profile-modal" class="modal-overlay" style="display:none;">
     <div class="modal">
       <h2>프로필 설정</h2>
-      <p class="modal-desc">처음 오셨군요! 기본 정보를 입력해주세요.<br>트레이너와 길드원이 참고할 수 있습니다.</p>
+      <p class="modal-desc">이름과 체중만 입력하면 바로 시작할 수 있어요!</p>
 
       <div class="card">
-        <h3>기본 정보</h3>
+        <h3>필수 정보</h3>
         <div class="input-grid">
           <div class="input-group">
             <label>이름</label>
             <input type="text" id="profile-name" placeholder="홍길동">
           </div>
           <div class="input-group">
-            <label>나이</label>
-            <input type="number" id="profile-age" placeholder="30">
-          </div>
-          <div class="input-group">
-            <label>키 (cm)</label>
-            <input type="number" id="profile-height" step="0.1" placeholder="175">
-          </div>
-          <div class="input-group">
             <label>현재 체중 (kg)</label>
             <input type="number" id="profile-weight" step="0.1" placeholder="75">
           </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>건강 상태</h3>
-        <div class="input-stack">
           <div class="input-group">
-            <label>현재 가지고 있는 질환 / 지병</label>
-            <textarea id="profile-conditions" placeholder="예: 허리디스크 (L4-L5), 고혈압 약 복용 중, 왼쪽 무릎 연골 손상 등&#10;없으면 '없음' 입력"></textarea>
+            <label>PIN (4자리 숫자)</label>
+            <input type="password" id="profile-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="●●●●">
           </div>
           <div class="input-group">
-            <label>가족력</label>
-            <textarea id="profile-family-history" placeholder="예: 부 — 고혈압, 당뇨 / 모 — 골다공증&#10;없으면 '없음' 입력"></textarea>
-          </div>
-          <div class="input-group">
-            <label>알레르기 / 주의사항</label>
-            <textarea id="profile-allergies" placeholder="예: 유당불내증, 아스피린 알레르기&#10;없으면 '없음' 입력"></textarea>
+            <label>PIN 확인</label>
+            <input type="password" id="profile-pin-confirm" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="●●●●">
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <h3>최근 메디컬 체크 결과 (선택)</h3>
-        <p class="card-hint">건강검진 수치가 있으면 입력해주세요. 없으면 건너뛰어도 됩니다.</p>
-        <div id="medical-fields">
-          <div class="medical-row">
-            <input type="text" placeholder="항목 (예: 혈압)" class="med-name">
-            <input type="text" placeholder="수치 (예: 130/85)" class="med-value">
-            <input type="text" placeholder="단위 (예: mmHg)" class="med-unit">
-          </div>
-          <div class="medical-row">
-            <input type="text" placeholder="항목 (예: 공복혈당)" class="med-name">
-            <input type="text" placeholder="수치 (예: 95)" class="med-value">
-            <input type="text" placeholder="단위 (예: mg/dL)" class="med-unit">
-          </div>
-          <div class="medical-row">
-            <input type="text" placeholder="항목 (예: 콜레스테롤)" class="med-name">
-            <input type="text" placeholder="수치 (예: 210)" class="med-value">
-            <input type="text" placeholder="단위 (예: mg/dL)" class="med-unit">
+      <div id="extra-profile" style="display:none;">
+        <div class="card">
+          <h3>추가 정보 (선택)</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label>나이</label>
+              <input type="number" id="profile-age" placeholder="30">
+            </div>
+            <div class="input-group">
+              <label>키 (cm)</label>
+              <input type="number" id="profile-height" step="0.1" placeholder="175">
+            </div>
           </div>
         </div>
-        <button class="btn-secondary" id="add-medical-btn">+ 항목 추가</button>
-      </div>
 
-      <div class="card">
-        <h3>운동 경험</h3>
-        <div class="input-stack">
-          <div class="input-group">
-            <label>현재 운동 습관</label>
-            <textarea id="profile-exercise-history" placeholder="예: 주 2회 헬스, 가끔 등산&#10;운동 안 하면 '없음' 입력"></textarea>
+        <div class="card">
+          <h3>건강 상태 (선택)</h3>
+          <div class="input-stack">
+            <div class="input-group">
+              <label>질환 / 지병</label>
+              <textarea id="profile-conditions" placeholder="없으면 비워두세요"></textarea>
+            </div>
+            <div class="input-group">
+              <label>가족력</label>
+              <textarea id="profile-family-history" placeholder="없으면 비워두세요"></textarea>
+            </div>
+            <div class="input-group">
+              <label>알레르기 / 주의사항</label>
+              <textarea id="profile-allergies" placeholder="없으면 비워두세요"></textarea>
+            </div>
           </div>
-          <div class="input-group">
-            <label>부상 이력 / 운동 시 주의할 부위</label>
-            <textarea id="profile-injuries" placeholder="예: 2024년 왼쪽 발목 인대 손상, 오른쪽 어깨 회전근개 불편&#10;없으면 '없음' 입력"></textarea>
+        </div>
+
+        <div class="card">
+          <h3>메디컬 체크 결과 (선택)</h3>
+          <div id="medical-fields">
+            <div class="medical-row">
+              <input type="text" placeholder="항목" class="med-name">
+              <input type="text" placeholder="수치" class="med-value">
+              <input type="text" placeholder="단위" class="med-unit">
+            </div>
+          </div>
+          <button class="btn-secondary" id="add-medical-btn">+ 항목 추가</button>
+        </div>
+
+        <div class="card">
+          <h3>운동 경험 (선택)</h3>
+          <div class="input-stack">
+            <div class="input-group">
+              <label>현재 운동 습관</label>
+              <textarea id="profile-exercise-history" placeholder="없으면 비워두세요"></textarea>
+            </div>
+            <div class="input-group">
+              <label>부상 이력</label>
+              <textarea id="profile-injuries" placeholder="없으면 비워두세요"></textarea>
+            </div>
           </div>
         </div>
       </div>
 
-      <button class="btn-primary" id="save-profile-btn">프로필 저장하고 시작하기</button>
+      <button class="btn-secondary" id="toggle-extra-btn" style="width:100%;margin-top:0.5rem;">더 입력하기 (선택사항)</button>
+      <button class="btn-primary" id="save-profile-btn">시작하기</button>
+    </div>
+  </div>
+
+  <!-- ===== PIN 로그인 ===== -->
+  <div id="pin-screen" style="display:none;">
+    <div class="modal">
+      <h2>GIRIN BODY LOG</h2>
+      <p class="modal-desc">PIN 4자리를 입력하세요</p>
+      <div class="pin-input-wrap">
+        <input type="password" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="● ● ● ●" autocomplete="off">
+      </div>
+      <div id="pin-error" class="pin-error"></div>
+      <button class="btn-primary" id="pin-login-btn">들어가기</button>
+      <p class="modal-desc" style="margin-top:1rem;font-size:0.8rem;">처음이면 프로필 등록부터 시작돼요</p>
     </div>
   </div>
 
@@ -100,10 +125,9 @@
     <header>
       <h1>GIRIN BODY LOG</h1>
       <p class="subtitle">AI 빅웨이브를 넘기 위한 신체+정신 컨디션 트래커</p>
-      <div class="member-selector">
-        <button class="member-btn active" data-member="girin">기린 (박승현)</button>
-        <button class="member-btn" data-member="minho">김민호</button>
-        <button class="member-btn" data-member="seunghun">이승훈</button>
+      <div class="logged-in-user">
+        <span id="user-display-name"></span>
+        <button class="btn-logout" id="logout-btn">로그아웃</button>
       </div>
     </header>
 
@@ -111,7 +135,8 @@
       <button class="tab-btn active" data-tab="record">오늘 기록</button>
       <button class="tab-btn" data-tab="dashboard">대시보드</button>
       <button class="tab-btn" data-tab="routine">운동 루틴</button>
-      <button class="tab-btn" data-tab="trainer">PT 트레이너</button>
+      <!-- PT 트레이너: 트레이너 섭외 후 활성화 -->
+      <!-- <button class="tab-btn" data-tab="trainer">PT 트레이너</button> -->
       <button class="tab-btn" data-tab="profile">내 프로필</button>
       <button class="tab-btn" data-tab="guild">길드 현황</button>
     </nav>
@@ -121,74 +146,77 @@
       <section id="tab-record" class="tab-content active">
         <h2>오늘의 기록 <span id="today-date"></span></h2>
 
+        <!-- 빠른 기록: 30초 안에 끝내기 -->
         <div class="card">
-          <h3>신체 수치</h3>
-          <div class="input-grid">
-            <div class="input-group">
-              <label for="weight">체중 (kg)</label>
-              <input type="number" id="weight" step="0.1" placeholder="75.0">
-            </div>
-            <div class="input-group">
-              <label for="body-fat">체지방률 (%)</label>
-              <input type="number" id="body-fat" step="0.1" placeholder="20.0">
-            </div>
-            <div class="input-group">
-              <label for="sleep-hours">수면 시간</label>
-              <input type="number" id="sleep-hours" step="0.5" min="0" max="24" placeholder="7.5">
-            </div>
-            <div class="input-group">
-              <label for="condition">컨디션 (1~10)</label>
-              <input type="range" id="condition" min="1" max="10" value="5">
-              <span id="condition-value" class="range-value">5</span>
-            </div>
+          <h3>오늘 어때요?</h3>
+          <div class="input-group" style="margin-bottom:1rem;">
+            <label for="condition">컨디션 (1~10)</label>
+            <input type="range" id="condition" min="1" max="10" value="5">
+            <span id="condition-value" class="range-value">5</span>
           </div>
-        </div>
-
-        <div class="card">
-          <h3>운동 체크</h3>
           <div class="routine-check">
             <label class="check-item">
               <input type="checkbox" id="morning-done">
-              <span class="check-label">아침 루틴 (10분)</span>
-              <span class="check-detail">스트레칭 → 스쿼트 → 팔굽혀펴기 → 플랭크</span>
+              <span class="check-label">아침 루틴</span>
             </label>
             <label class="check-item">
               <input type="checkbox" id="break-done">
               <span class="check-label">포모도로 브레이크</span>
-              <span class="check-detail">목/어깨 → 스쿼트 → 손목 → 눈 운동</span>
             </label>
             <div class="break-count-row" id="break-count-row" style="display:none;">
-              <label>브레이크 횟수</label>
+              <label>횟수</label>
               <input type="number" id="break-count" min="1" max="20" value="1">
             </div>
             <label class="check-item">
               <input type="checkbox" id="evening-done">
-              <span class="check-label">저녁 루틴 (20분)</span>
-              <span class="check-detail">유산소 → 버피 → 마운틴클라이머 → 브릿지 → 스트레칭</span>
+              <span class="check-label">저녁 루틴</span>
             </label>
           </div>
         </div>
 
-        <!-- 스마트 운동 입력 -->
-        <div class="card">
-          <h3>운동 기록</h3>
-          <p class="card-hint">운동 이름을 입력하면 맞춤 수치 입력란이 나타납니다</p>
-          <div id="smart-exercises"></div>
-          <button class="btn-secondary" id="add-smart-exercise-btn">+ 운동 추가</button>
-        </div>
-
         <div class="card">
           <h3>오늘 한마디</h3>
-          <textarea id="daily-note" placeholder="오늘 컨디션, 느낀 점, 메모 등..."></textarea>
+          <textarea id="daily-note" placeholder="한 줄이면 충분해요"></textarea>
         </div>
 
         <button class="btn-primary" id="save-btn">저장하기</button>
         <div id="save-message" class="save-message"></div>
+
+        <!-- 상세 기록: 펼쳐서 입력 -->
+        <details class="detail-section">
+          <summary class="detail-toggle">상세 기록 (체중, 수면, 운동 기록)</summary>
+
+          <div class="card">
+            <h3>신체 수치</h3>
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="weight">체중 (kg)</label>
+                <input type="number" id="weight" step="0.1" placeholder="75.0">
+              </div>
+              <div class="input-group">
+                <label for="body-fat">체지방률 (%)</label>
+                <input type="number" id="body-fat" step="0.1" placeholder="20.0">
+              </div>
+              <div class="input-group">
+                <label for="sleep-hours">수면 시간</label>
+                <input type="number" id="sleep-hours" step="0.5" min="0" max="24" placeholder="7.5">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>운동 기록</h3>
+            <p class="card-hint">운동 이름을 입력하면 맞춤 수치 입력란이 나타납니다</p>
+            <div id="smart-exercises"></div>
+            <button class="btn-secondary" id="add-smart-exercise-btn">+ 운동 추가</button>
+          </div>
+        </details>
       </section>
 
       <!-- ===== 대시보드 탭 ===== -->
       <section id="tab-dashboard" class="tab-content">
         <h2>내 대시보드</h2>
+        <div id="insights" class="insights-box"></div>
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-number" id="streak-count">0</div>
