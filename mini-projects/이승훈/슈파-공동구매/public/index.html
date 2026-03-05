@@ -296,6 +296,26 @@
     .coming-soon-title { font-size: 18px; font-weight: 600; color: #555; margin-bottom: 8px; }
     .coming-soon-sub { font-size: 14px; }
 
+    /* 주문 상태 뱃지 */
+    .badge-접수 { background: #fff3cd; color: #856404; }
+    .badge-배송준비 { background: #cce5ff; color: #004085; }
+    .badge-배송중 { background: #d4edda; color: #155724; }
+    .badge-배송완료 { background: #e2e3e5; color: #383d41; }
+
+    /* 상태 변경 버튼 */
+    .status-btn {
+      padding: 4px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      background: white;
+      transition: background 0.2s;
+    }
+    .status-btn:hover { background: #f0f0f0; }
+    .status-btn.next-status { border-color: #3498db; color: #3498db; font-weight: 600; }
+    .status-btn.next-status:hover { background: #3498db; color: white; }
+
     @media (max-width: 768px) {
       .form-grid { grid-template-columns: 1fr; }
       .stats { flex-direction: column; }
@@ -317,7 +337,7 @@
   <!-- 탭 메뉴 -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('products')">상품관리</button>
-    <button class="tab-btn disabled" onclick="switchTab('orders')">주문관리</button>
+    <button class="tab-btn" onclick="switchTab('orders')">주문관리</button>
     <button class="tab-btn disabled" onclick="switchTab('purchase-orders')">발주서</button>
     <button class="tab-btn disabled" onclick="switchTab('settlement')">정산</button>
     <button class="tab-btn disabled" onclick="switchTab('requests')">상품요청</button>
@@ -418,14 +438,67 @@
 
     <!-- ==================== 주문관리 탭 ==================== -->
     <div class="tab-content" id="tab-orders">
-      <div class="card">
-        <div class="coming-soon">
-          <div class="coming-soon-icon">📋</div>
-          <div class="coming-soon-title">주문관리</div>
-          <div class="coming-soon-sub">주문 접수, 주문 현황, 배송 상태 관리가 여기에 들어옵니다</div>
-        </div>
+
+    <!-- 주문 통계 -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="todayOrderCount">0</div>
+        <div class="stat-label">오늘 주문</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="todayOrderAmount">0</div>
+        <div class="stat-label">오늘 매출</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="pendingOrderCount">0</div>
+        <div class="stat-label">접수 대기</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalCustomerCount">0</div>
+        <div class="stat-label">전체 고객</div>
       </div>
     </div>
+
+    <!-- 필터 -->
+    <div class="card">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div class="form-group" style="margin:0;">
+          <label style="margin-bottom:4px;">날짜</label>
+          <input type="date" id="orderDateFilter" style="padding:8px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label style="margin-bottom:4px;">상태</label>
+          <select id="orderStatusFilter" style="padding:8px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+            <option value="">전체</option>
+            <option value="접수">접수</option>
+            <option value="배송준비">배송준비</option>
+            <option value="배송중">배송중</option>
+            <option value="배송완료">배송완료</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-small" onclick="loadOrders()" style="align-self:flex-end;">조회</button>
+        <button class="btn btn-secondary btn-small" onclick="clearOrderFilter()" style="align-self:flex-end;">초기화</button>
+      </div>
+    </div>
+
+    <!-- 주문 목록 -->
+    <div class="card">
+      <h2>주문 목록</h2>
+      <div id="orderList"></div>
+    </div>
+
+    <!-- 주문 상세 모달 -->
+    <div id="orderDetailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:12px; padding:24px; max-width:500px; width:90%; max-height:80vh; overflow-y:auto; margin:auto; position:relative; top:50%; transform:translateY(-50%);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0; border:none; padding:0;" id="modalOrderNumber">주문 상세</h2>
+          <button onclick="closeOrderModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#999;">&times;</button>
+        </div>
+        <div id="orderDetailContent"></div>
+      </div>
+    </div>
+
+    </div><!-- /tab-orders -->
 
     <!-- ==================== 발주서 탭 ==================== -->
     <div class="tab-content" id="tab-purchase-orders">
@@ -761,7 +834,160 @@
       if (clickedBtn) clickedBtn.classList.add('active');
       const tabContent = document.getElementById('tab-' + tabName);
       if (tabContent) tabContent.classList.add('active');
+
+      // 탭별 데이터 로드
+      if (tabName === 'orders') loadOrders();
     }
+
+    // ──────────────────────────────────────
+    // 주문관리 기능
+    // ──────────────────────────────────────
+    const ORDER_API = '/api/orders';
+    const CUSTOMER_API = '/api/customers';
+    const statusFlow = ['접수', '배송준비', '배송중', '배송완료'];
+
+    async function loadOrders() {
+      const date = document.getElementById('orderDateFilter').value;
+      const status = document.getElementById('orderStatusFilter').value;
+
+      let url = ORDER_API + '?';
+      if (date) url += `date=${date}&`;
+      if (status) url += `status=${status}&`;
+
+      const res = await fetch(url);
+      const orders = await res.json();
+
+      // 통계 업데이트
+      const today = new Date().toISOString().slice(0, 10);
+      const todayOrders = orders.filter(o => o.created_at && o.created_at.startsWith(today));
+      document.getElementById('todayOrderCount').textContent = todayOrders.length;
+      document.getElementById('todayOrderAmount').textContent =
+        todayOrders.reduce((sum, o) => sum + o.total_amount, 0).toLocaleString() + '원';
+      document.getElementById('pendingOrderCount').textContent =
+        orders.filter(o => o.status === '접수').length;
+
+      // 고객 수
+      try {
+        const custRes = await fetch(CUSTOMER_API);
+        const customers = await custRes.json();
+        document.getElementById('totalCustomerCount').textContent = customers.length;
+      } catch (e) {
+        // 무시
+      }
+
+      // 목록 표시
+      const container = document.getElementById('orderList');
+
+      if (orders.length === 0) {
+        container.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">주문이 없습니다</div>
+            <div class="empty-sub">카카오 챗봇을 통해 주문이 들어오면 여기에 표시됩니다</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>주문번호</th>
+                <th>고객</th>
+                <th>금액</th>
+                <th>결제</th>
+                <th>상태</th>
+                <th>주문일시</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders.map(o => {
+                const nextIdx = statusFlow.indexOf(o.status) + 1;
+                const nextStatus = nextIdx < statusFlow.length ? statusFlow[nextIdx] : null;
+                return `
+                <tr>
+                  <td><strong>${esc(o.order_number)}</strong></td>
+                  <td>${esc(o.customer_name)}${o.customer_phone ? '<br><span style="font-size:12px;color:#999;">' + esc(o.customer_phone) + '</span>' : ''}</td>
+                  <td class="price">${o.total_amount.toLocaleString()}원</td>
+                  <td>${esc(o.payment_method)}</td>
+                  <td><span class="badge badge-${o.status}">${esc(o.status)}</span></td>
+                  <td style="font-size:13px;">${esc(o.created_at)}</td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn btn-primary btn-small" onclick="showOrderDetail(${o.id})">상세</button>
+                      ${nextStatus ? `<button class="status-btn next-status" onclick="changeOrderStatus(${o.id}, '${nextStatus}')">${nextStatus}</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `}).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function clearOrderFilter() {
+      document.getElementById('orderDateFilter').value = '';
+      document.getElementById('orderStatusFilter').value = '';
+      loadOrders();
+    }
+
+    async function changeOrderStatus(orderId, newStatus) {
+      await fetch(`${ORDER_API}/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      showToast(`상태가 "${newStatus}"로 변경되었습니다`);
+      loadOrders();
+    }
+
+    async function showOrderDetail(orderId) {
+      const res = await fetch(`${ORDER_API}/${orderId}`);
+      const order = await res.json();
+
+      document.getElementById('modalOrderNumber').textContent = order.order_number;
+      document.getElementById('orderDetailContent').innerHTML = `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px; color:#999; margin-bottom:4px;">고객 정보</div>
+          <div><strong>${esc(order.customer_name)}</strong></div>
+          <div style="font-size:14px;">${esc(order.customer_phone)}</div>
+          <div style="font-size:14px; color:#666;">${esc(order.customer_address)}</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px; color:#999; margin-bottom:4px;">주문 항목</div>
+          ${order.items.map(item => `
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f0f0f0;">
+              <span>${esc(item.product_name)} x ${item.quantity}</span>
+              <span class="price">${item.subtotal.toLocaleString()}원</span>
+            </div>
+          `).join('')}
+          <div style="display:flex; justify-content:space-between; padding:12px 0; font-weight:700; font-size:16px;">
+            <span>합계</span>
+            <span>${order.total_amount.toLocaleString()}원</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="badge badge-${order.status}">${esc(order.status)}</span>
+          <span style="font-size:13px; color:#666;">${esc(order.payment_method)}</span>
+          <span style="font-size:13px; color:#999;">${esc(order.created_at)}</span>
+        </div>
+      `;
+
+      document.getElementById('orderDetailModal').style.display = 'block';
+    }
+
+    function closeOrderModal() {
+      document.getElementById('orderDetailModal').style.display = 'none';
+    }
+
+    // ──────────────────────────────────────
+    // 탭 전환 시 데이터 로드
+    // ──────────────────────────────────────
+    const origSwitchTab = switchTab;
 
     // 페이지 로드 시 상품 목록 불러오기
     loadProducts();

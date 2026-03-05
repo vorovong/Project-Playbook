@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>공존공간 사업관리</title>
+  <style>
+    /* ── 기본 스타일 ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', '맑은 고딕', sans-serif;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    /* ── 헤더 ── */
+    .header {
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 22px; }
+    .header .stats {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+    }
+    .header .stat-item {
+      background: rgba(255,255,255,0.15);
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    /* ── 탭 네비게이션 ── */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid #e0e0e0;
+      padding: 0 20px;
+    }
+    .tab {
+      padding: 14px 24px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-size: 15px;
+      color: #777;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #333; }
+    .tab.active {
+      color: #3498db;
+      border-bottom-color: #3498db;
+      font-weight: 600;
+    }
+
+    /* ── 컨텐츠 영역 ── */
+    .content { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── 카드 ── */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #2c3e50;
+    }
+
+    /* ── 폼 ── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ── 버튼 ── */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .btn-primary { background: #3498db; color: white; }
+    .btn-primary:hover { background: #2980b9; }
+    .btn-success { background: #27ae60; color: white; }
+    .btn-success:hover { background: #219a52; }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-secondary { background: #95a5a6; color: white; }
+    .btn-secondary:hover { background: #7f8c8d; }
+    .btn-outline {
+      background: white;
+      color: #3498db;
+      border: 1px solid #3498db;
+    }
+    .btn-outline:hover { background: #ebf5fb; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-group { display: flex; gap: 8px; margin-top: 16px; }
+
+    /* ── PDF 업로드 영역 ── */
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #fafbfc;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #3498db;
+      background: #ebf5fb;
+    }
+    .upload-area .icon { font-size: 48px; margin-bottom: 12px; }
+    .upload-area p { color: #777; font-size: 14px; }
+    .upload-area input[type="file"] { display: none; }
+
+    /* ── 진행 상태 바 ── */
+    .progress-bar {
+      display: none;
+      margin-top: 16px;
+    }
+    .progress-bar .bar {
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #3498db;
+      border-radius: 3px;
+      animation: progress 2s ease-in-out infinite;
+    }
+    @keyframes progress {
+      0% { width: 0%; }
+      50% { width: 70%; }
+      100% { width: 100%; }
+    }
+    .progress-bar .status {
+      font-size: 13px;
+      color: #777;
+      margin-top: 8px;
+    }
+
+    /* ── 추출 텍스트 미리보기 ── */
+    .text-preview {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── 사업 목록 ── */
+    .project-list { display: flex; flex-direction: column; gap: 12px; }
+    .project-item {
+      background: white;
+      border-radius: 10px;
+      padding: 18px 22px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .project-item:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+    .project-item .info h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .project-item .info .meta {
+      font-size: 13px;
+      color: #888;
+      display: flex;
+      gap: 12px;
+    }
+    .project-item .actions { display: flex; gap: 6px; }
+
+    /* ── 뱃지 ── */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-blue { background: #ebf5fb; color: #2980b9; }
+    .badge-green { background: #eafaf1; color: #27ae60; }
+    .badge-orange { background: #fef5e7; color: #e67e22; }
+    .badge-red { background: #fdedec; color: #e74c3c; }
+    .badge-gray { background: #f2f3f4; color: #7f8c8d; }
+
+    /* ── PDF 파일 목록 ── */
+    .pdf-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .pdf-item .pdf-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pdf-item .pdf-icon { font-size: 24px; }
+
+    /* ── 필터 바 ── */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-bar select, .filter-bar input {
+      padding: 8px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    /* ── 모달 ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal h2 { margin-bottom: 20px; }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    /* ── 빈 상태 ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    .empty-state .icon { font-size: 64px; margin-bottom: 16px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── 토스트 알림 ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+    }
+    .toast-success { background: #27ae60; }
+    .toast-error { background: #e74c3c; }
+    @keyframes slideIn {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ── 반응형 ── */
+    @media (max-width: 768px) {
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 10px; }
+      .tabs { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── 헤더 ── -->
+<div class="header">
+  <h1>🏢 공존공간 사업관리</h1>
+  <div class="stats">
+    <div class="stat-item" id="stat-projects">사업 0건</div>
+    <div class="stat-item" id="stat-pdfs">PDF 0건</div>
+  </div>
+</div>
+
+<!-- ── 탭 ── -->
+<div class="tabs">
+  <div class="tab active" data-tab="dashboard">📊 대시보드</div>
+  <div class="tab" data-tab="upload">📄 PDF 업로드</div>
+  <div class="tab" data-tab="register">✏️ 사업 등록</div>
+  <div class="tab" data-tab="projects">📋 사업 목록</div>
+</div>
+
+<!-- ── 컨텐츠 ── -->
+<div class="content">
+
+  <!-- ===== 대시보드 ===== -->
+  <div class="section active" id="section-dashboard">
+    <div class="card">
+      <h2>📊 현황 요약</h2>
+      <div class="form-row" id="dashboard-stats">
+        <div style="text-align:center; padding:20px;">
+          <div style="font-size:36px; font-weight:700; color:#3498db;" id="dash-total">0</div>
+          <div style="color:#888; margin-top:4px;">전체 사업</div>
+        </div>
+        <div style="text-align:center; padding:20px;">
+          <div style="font-size:36px; font-weight:700; color:#27ae60;" id="dash-pdfs">0</div>
+          <div style="color:#888; margin-top:4px;">업로드 PDF</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📁 유형별 사업</h2>
+      <div id="dashboard-by-type">
+        <div class="empty-state">
+          <p>아직 등록된 사업이 없습니다. PDF를 업로드하고 사업을 등록해보세요!</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📄 최근 업로드 PDF</h2>
+      <div id="dashboard-recent-pdfs">
+        <div class="empty-state">
+          <p>업로드된 PDF가 없습니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PDF 업로드 ===== -->
+  <div class="section" id="section-upload">
+    <div class="card">
+      <h2>📄 PDF 업로드</h2>
+      <p style="color:#888; margin-bottom:16px; font-size:14px;">
+        사업계획서, 결과보고서 등 PDF 파일을 올리면 텍스트를 자동으로 추출합니다.
+      </p>
+
+      <div class="upload-area" id="uploadArea">
+        <div class="icon">📎</div>
+        <p><strong>PDF 파일을 여기에 드래그하거나 클릭해서 선택</strong></p>
+        <p style="margin-top:8px; font-size:12px;">최대 20MB / PDF 파일만 가능</p>
+        <input type="file" id="pdfInput" accept=".pdf">
+      </div>
+
+      <div class="progress-bar" id="uploadProgress">
+        <div class="bar"><div class="fill"></div></div>
+        <div class="status">PDF 업로드 및 텍스트 추출 중...</div>
+      </div>
+    </div>
+
+    <!-- 추출 결과 -->
+    <div class="card" id="extractResult" style="display:none;">
+      <h2>📝 텍스트 추출 결과</h2>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <span class="badge badge-blue" id="resultFileName"></span>
+        <span class="badge badge-green" id="resultPages"></span>
+        <span class="badge badge-gray" id="resultLength"></span>
+      </div>
+      <div class="text-preview" id="resultText"></div>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btnUseForRegister">이 PDF로 사업 등록하기</button>
+        <button class="btn btn-outline" id="btnViewFullText">전체 텍스트 보기</button>
+      </div>
+    </div>
+
+    <!-- 업로드된 PDF 목록 -->
+    <div class="card">
+      <h2>📚 업로드된 PDF 목록</h2>
+      <div id="pdfList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 사업 등록 ===== -->
+  <div class="section" id="section-register">
+    <div class="card">
+      <h2>✏️ 사업 등록</h2>
+      <p style="color:#888; margin-bottom:16px; font-size:14px;">
+        PDF에서 추출한 텍스트를 참고하면서 사업 정보를 정리해 입력하세요.
+      </p>
+
+      <!-- PDF 참조 영역 -->
+      <div id="registerPdfRef" style="display:none; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:13px; font-weight:600; color:#555;">📄 참고 PDF 텍스트</span>
+          <button class="btn btn-sm btn-secondary" id="btnTogglePdfRef">접기/펼치기</button>
+        </div>
+        <div class="text-preview" id="registerPdfText" style="max-height:200px;"></div>
+      </div>
+
+      <form id="projectForm">
+        <input type="hidden" id="formPdfId" value="">
+        <input type="hidden" id="formProjectId" value="">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>사업명 *</label>
+            <input type="text" id="formName" placeholder="예: 2025 마을공동체 활성화 사업" required>
+          </div>
+          <div class="form-group">
+            <label>사업 유형</label>
+            <select id="formType">
+              <option value="마을사업">마을사업</option>
+              <option value="시장사업">시장사업</option>
+              <option value="정부사업">정부사업</option>
+              <option value="자체사업">자체사업</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>상태</label>
+            <select id="formStatus">
+              <option value="완료">완료</option>
+              <option value="진행중">진행중</option>
+              <option value="계획중">계획중</option>
+              <option value="중단">중단</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>시작일</label>
+            <input type="date" id="formStartDate">
+          </div>
+          <div class="form-group">
+            <label>종료일</label>
+            <input type="date" id="formEndDate">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>예산</label>
+            <input type="text" id="formBudget" placeholder="예: 50,000,000원">
+          </div>
+          <div class="form-group">
+            <label>발주/지원 기관</label>
+            <input type="text" id="formOrganization" placeholder="예: 서울시, 중소벤처기업부">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>사업 개요</label>
+          <textarea id="formSummary" rows="3" placeholder="사업의 목적과 주요 내용을 간단히 정리해주세요"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>성과 / 잘한 점</label>
+          <textarea id="formAchievements" rows="3" placeholder="이 사업에서 좋았던 점, 성과를 적어주세요"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>개선점 / 아쉬운 점</label>
+          <textarea id="formImprovements" rows="3" placeholder="다음에 개선할 점, 아쉬웠던 부분"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>리스크 / 주의할 점</label>
+          <textarea id="formRisks" rows="3" placeholder="진행 중 발생한 위험이나 주의사항"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>기타 메모</label>
+          <textarea id="formNotes" rows="2" placeholder="추가 메모"></textarea>
+        </div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn btn-success" id="btnSubmitProject">사업 등록</button>
+          <button type="button" class="btn btn-secondary" id="btnResetForm">초기화</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== 사업 목록 ===== -->
+  <div class="section" id="section-projects">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2>📋 사업 목록</h2>
+        <button class="btn btn-primary btn-sm" onclick="switchTab('register')">+ 새 사업 등록</button>
+      </div>
+
+      <div class="filter-bar">
+        <select id="filterType" onchange="loadProjects()">
+          <option value="">전체 유형</option>
+          <option value="마을사업">마을사업</option>
+          <option value="시장사업">시장사업</option>
+          <option value="정부사업">정부사업</option>
+          <option value="자체사업">자체사업</option>
+          <option value="기타">기타</option>
+        </select>
+        <select id="filterStatus" onchange="loadProjects()">
+          <option value="">전체 상태</option>
+          <option value="완료">완료</option>
+          <option value="진행중">진행중</option>
+          <option value="계획중">계획중</option>
+          <option value="중단">중단</option>
+        </select>
+      </div>
+
+      <div class="project-list" id="projectList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 사업 상세 모달 ===== -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2 id="modalTitle"></h2>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ===== 전체 텍스트 모달 ===== -->
+<div class="modal-overlay" id="textModal">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('textModal').classList.remove('active')">&times;</button>
+    <h2 id="textModalTitle">전체 텍스트</h2>
+    <div class="text-preview" id="textModalContent" style="max-height:60vh;"></div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// 🧠 공존공간 사업관리 — 프론트엔드 로직
+// ============================================
+
+// ── 상태 관리 ──
+let currentPdfId = null;      // 현재 업로드된/선택된 PDF ID
+let currentPdfText = '';      // 현재 PDF 전체 텍스트
+let editingProjectId = null;  // 수정 중인 사업 ID
+
+// ── 탭 전환 ──
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+});
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+  document.getElementById(`section-${tabName}`).classList.add('active');
+
+  // 탭 전환 시 데이터 새로고침
+  if (tabName === 'dashboard') loadDashboard();
+  if (tabName === 'upload') loadPdfList();
+  if (tabName === 'projects') loadProjects();
+}
+
+// ── 토스트 알림 ──
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ============================================
+// 📄 PDF 업로드 기능
+// ============================================
+
+const uploadArea = document.getElementById('uploadArea');
+const pdfInput = document.getElementById('pdfInput');
+
+// 클릭으로 파일 선택
+uploadArea.addEventListener('click', () => pdfInput.click());
+
+// 드래그 앤 드롭
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    uploadPDF(file);
+  } else {
+    showToast('PDF 파일만 업로드할 수 있습니다', 'error');
+  }
+});
+
+// 파일 선택 시
+pdfInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) {
+    uploadPDF(e.target.files[0]);
+  }
+});
+
+// PDF 업로드 처리
+async function uploadPDF(file) {
+  const progressBar = document.getElementById('uploadProgress');
+  progressBar.style.display = 'block';
+
+  const formData = new FormData();
+  formData.append('pdf', file);
+
+  try {
+    const res = await fetch('/api/pdf/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error);
+
+    progressBar.style.display = 'none';
+
+    // 결과 표시
+    currentPdfId = data.pdfId;
+    document.getElementById('extractResult').style.display = 'block';
+    document.getElementById('resultFileName').textContent = '📄 ' + data.fileName;
+    document.getElementById('resultPages').textContent = data.pages + '페이지';
+    document.getElementById('resultLength').textContent = data.textLength.toLocaleString() + '자';
+    document.getElementById('resultText').textContent = data.textPreview;
+
+    showToast('PDF 텍스트 추출 완료!');
+    loadPdfList();
+    loadStats();
+  } catch (error) {
+    progressBar.style.display = 'none';
+    showToast(error.message || 'PDF 처리 실패', 'error');
+  }
+}
+
+// "이 PDF로 사업 등록하기" 버튼
+document.getElementById('btnUseForRegister').addEventListener('click', async () => {
+  if (!currentPdfId) return;
+
+  // 전체 텍스트 가져오기
+  const res = await fetch(`/api/pdf/${currentPdfId}/text`);
+  const data = await res.json();
+  currentPdfText = data.text;
+
+  // 사업 등록 탭으로 이동 + PDF 텍스트 표시
+  document.getElementById('formPdfId').value = currentPdfId;
+  document.getElementById('registerPdfRef').style.display = 'block';
+  document.getElementById('registerPdfText').textContent = currentPdfText;
+  switchTab('register');
+});
+
+// "전체 텍스트 보기" 버튼
+document.getElementById('btnViewFullText').addEventListener('click', async () => {
+  if (!currentPdfId) return;
+  const res = await fetch(`/api/pdf/${currentPdfId}/text`);
+  const data = await res.json();
+  document.getElementById('textModalTitle').textContent = '📄 ' + data.fileName;
+  document.getElementById('textModalContent').textContent = data.text;
+  document.getElementById('textModal').classList.add('active');
+});
+
+// PDF 참조 텍스트 접기/펼치기
+document.getElementById('btnTogglePdfRef').addEventListener('click', () => {
+  const el = document.getElementById('registerPdfText');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+});
+
+// PDF 목록 불러오기
+async function loadPdfList() {
+  const res = await fetch('/api/pdf');
+  const pdfs = await res.json();
+  const container = document.getElementById('pdfList');
+
+  if (pdfs.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>업로드된 PDF가 없습니다</p></div>';
+    return;
+  }
+
+  container.innerHTML = pdfs.map(pdf => `
+    <div class="pdf-item">
+      <div class="pdf-info">
+        <span class="pdf-icon">📄</span>
+        <div>
+          <div style="font-weight:500;">${pdf.original_name}</div>
+          <div style="font-size:12px; color:#888;">
+            ${formatFileSize(pdf.file_size)} · ${formatDate(pdf.uploaded_at)}
+            ${pdf.project_name ? ' · 🔗 ' + pdf.project_name : ''}
+          </div>
+        </div>
+      </div>
+      <div>
+        <button class="btn btn-sm btn-outline" onclick="viewPdfText(${pdf.id}, '${escapeHtml(pdf.original_name)}')">텍스트 보기</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePdf(${pdf.id})">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// PDF 텍스트 보기
+async function viewPdfText(pdfId, fileName) {
+  const res = await fetch(`/api/pdf/${pdfId}/text`);
+  const data = await res.json();
+  document.getElementById('textModalTitle').textContent = '📄 ' + fileName;
+  document.getElementById('textModalContent').textContent = data.text;
+  document.getElementById('textModal').classList.add('active');
+}
+
+// PDF 삭제
+async function deletePdf(pdfId) {
+  if (!confirm('이 PDF를 삭제할까요?')) return;
+  await fetch(`/api/pdf/${pdfId}`, { method: 'DELETE' });
+  showToast('PDF 삭제 완료');
+  loadPdfList();
+  loadStats();
+}
+
+// ============================================
+// ✏️ 사업 등록/수정 폼
+// ============================================
+
+document.getElementById('projectForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const body = {
+    name: document.getElementById('formName').value,
+    type: document.getElementById('formType').value,
+    status: document.getElementById('formStatus').value,
+    start_date: document.getElementById('formStartDate').value || null,
+    end_date: document.getElementById('formEndDate').value || null,
+    budget: document.getElementById('formBudget').value || null,
+    organization: document.getElementById('formOrganization').value || null,
+    summary: document.getElementById('formSummary').value || null,
+    achievements: document.getElementById('formAchievements').value || null,
+    improvements: document.getElementById('formImprovements').value || null,
+    risks: document.getElementById('formRisks').value || null,
+    notes: document.getElementById('formNotes').value || null,
+    pdf_id: document.getElementById('formPdfId').value || null
+  };
+
+  try {
+    const projectId = document.getElementById('formProjectId').value;
+    let res;
+
+    if (projectId) {
+      // 수정
+      res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      // 신규 등록
+      res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    showToast(projectId ? '사업 수정 완료!' : '사업 등록 완료!');
+    resetForm();
+    loadStats();
+    switchTab('projects');
+  } catch (error) {
+    showToast(error.message, 'error');
+  }
+});
+
+// 폼 초기화
+document.getElementById('btnResetForm').addEventListener('click', resetForm);
+
+function resetForm() {
+  document.getElementById('projectForm').reset();
+  document.getElementById('formPdfId').value = '';
+  document.getElementById('formProjectId').value = '';
+  document.getElementById('registerPdfRef').style.display = 'none';
+  document.getElementById('btnSubmitProject').textContent = '사업 등록';
+  editingProjectId = null;
+}
+
+// ============================================
+// 📋 사업 목록
+// ============================================
+
+async function loadProjects() {
+  const type = document.getElementById('filterType').value;
+  const status = document.getElementById('filterStatus').value;
+
+  let url = '/api/projects?';
+  if (type) url += `type=${encodeURIComponent(type)}&`;
+  if (status) url += `status=${encodeURIComponent(status)}&`;
+
+  const res = await fetch(url);
+  const projects = await res.json();
+  const container = document.getElementById('projectList');
+
+  if (projects.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <p>등록된 사업이 없습니다</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = projects.map(p => `
+    <div class="project-item" onclick="viewProject(${p.id})">
+      <div class="info">
+        <h3>${escapeHtml(p.name)}</h3>
+        <div class="meta">
+          <span class="badge ${getBadgeClass(p.type)}">${p.type}</span>
+          <span class="badge ${getStatusBadgeClass(p.status)}">${p.status}</span>
+          ${p.organization ? '<span>' + escapeHtml(p.organization) + '</span>' : ''}
+          ${p.start_date ? '<span>' + p.start_date + '</span>' : ''}
+        </div>
+      </div>
+      <div class="actions" onclick="event.stopPropagation()">
+        <button class="btn btn-sm btn-outline" onclick="editProject(${p.id})">수정</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProject(${p.id})">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 사업 상세 보기
+async function viewProject(id) {
+  const res = await fetch(`/api/projects/${id}`);
+  const p = await res.json();
+
+  document.getElementById('modalTitle').textContent = p.name;
+  document.getElementById('modalContent').innerHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:20px;">
+      <span class="badge ${getBadgeClass(p.type)}">${p.type}</span>
+      <span class="badge ${getStatusBadgeClass(p.status)}">${p.status}</span>
+    </div>
+
+    ${renderField('발주/지원 기관', p.organization)}
+    ${renderField('기간', formatPeriod(p.start_date, p.end_date))}
+    ${renderField('예산', p.budget)}
+    ${renderField('사업 개요', p.summary)}
+    ${renderField('성과 / 잘한 점', p.achievements)}
+    ${renderField('개선점 / 아쉬운 점', p.improvements)}
+    ${renderField('리스크 / 주의할 점', p.risks)}
+    ${renderField('기타 메모', p.notes)}
+
+    ${p.pdfs && p.pdfs.length > 0 ? `
+      <div style="margin-top:20px;">
+        <h3 style="font-size:15px; margin-bottom:8px;">📄 연결된 PDF</h3>
+        ${p.pdfs.map(pdf => `
+          <div class="pdf-item">
+            <span>📄 ${pdf.original_name}</span>
+            <button class="btn btn-sm btn-outline" onclick="viewPdfText(${pdf.id}, '${escapeHtml(pdf.original_name)}')">텍스트 보기</button>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+
+    <div style="margin-top:16px; font-size:12px; color:#aaa;">
+      등록일: ${formatDate(p.created_at)} · 수정일: ${formatDate(p.updated_at)}
+    </div>
+  `;
+
+  document.getElementById('projectModal').classList.add('active');
+}
+
+// 사업 수정
+async function editProject(id) {
+  const res = await fetch(`/api/projects/${id}`);
+  const p = await res.json();
+
+  document.getElementById('formProjectId').value = p.id;
+  document.getElementById('formName').value = p.name || '';
+  document.getElementById('formType').value = p.type || '기타';
+  document.getElementById('formStatus').value = p.status || '완료';
+  document.getElementById('formStartDate').value = p.start_date || '';
+  document.getElementById('formEndDate').value = p.end_date || '';
+  document.getElementById('formBudget').value = p.budget || '';
+  document.getElementById('formOrganization').value = p.organization || '';
+  document.getElementById('formSummary').value = p.summary || '';
+  document.getElementById('formAchievements').value = p.achievements || '';
+  document.getElementById('formImprovements').value = p.improvements || '';
+  document.getElementById('formRisks').value = p.risks || '';
+  document.getElementById('formNotes').value = p.notes || '';
+  document.getElementById('btnSubmitProject').textContent = '수정 저장';
+
+  switchTab('register');
+}
+
+// 사업 삭제
+async function deleteProject(id) {
+  if (!confirm('이 사업을 삭제할까요? 연결된 분석 결과도 삭제됩니다.')) return;
+  await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+  showToast('사업 삭제 완료');
+  loadProjects();
+  loadStats();
+}
+
+// 모달 닫기
+function closeModal() {
+  document.getElementById('projectModal').classList.remove('active');
+}
+
+// 모달 바깥 클릭으로 닫기
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ============================================
+// 📊 대시보드
+// ============================================
+
+async function loadDashboard() {
+  await loadStats();
+
+  // 최근 PDF 목록
+  const pdfRes = await fetch('/api/pdf');
+  const pdfs = await pdfRes.json();
+  const recentPdfs = document.getElementById('dashboard-recent-pdfs');
+
+  if (pdfs.length === 0) {
+    recentPdfs.innerHTML = '<div class="empty-state"><p>업로드된 PDF가 없습니다</p></div>';
+  } else {
+    recentPdfs.innerHTML = pdfs.slice(0, 5).map(pdf => `
+      <div class="pdf-item">
+        <div class="pdf-info">
+          <span class="pdf-icon">📄</span>
+          <div>
+            <div style="font-weight:500;">${pdf.original_name}</div>
+            <div style="font-size:12px; color:#888;">
+              ${formatFileSize(pdf.file_size)} · ${formatDate(pdf.uploaded_at)}
+              ${pdf.project_name ? ' · 🔗 ' + pdf.project_name : ' · <span style="color:#e67e22">미연결</span>'}
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+async function loadStats() {
+  const res = await fetch('/api/stats');
+  const stats = await res.json();
+
+  document.getElementById('stat-projects').textContent = `사업 ${stats.totalProjects}건`;
+  document.getElementById('stat-pdfs').textContent = `PDF ${stats.totalPdfs}건`;
+  document.getElementById('dash-total').textContent = stats.totalProjects;
+  document.getElementById('dash-pdfs').textContent = stats.totalPdfs;
+
+  // 유형별 사업
+  const byTypeEl = document.getElementById('dashboard-by-type');
+  if (stats.byType.length === 0) {
+    byTypeEl.innerHTML = '<div class="empty-state"><p>아직 등록된 사업이 없습니다. PDF를 업로드하고 사업을 등록해보세요!</p></div>';
+  } else {
+    byTypeEl.innerHTML = stats.byType.map(item => `
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0;">
+        <span class="badge ${getBadgeClass(item.type)}">${item.type}</span>
+        <span style="font-weight:600;">${item.count}건</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ============================================
+// 🔧 유틸리티 함수
+// ============================================
+
+function formatFileSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  return dateStr.split(' ')[0];
+}
+
+function formatPeriod(start, end) {
+  if (!start && !end) return null;
+  if (start && end) return `${start} ~ ${end}`;
+  if (start) return `${start} ~`;
+  return `~ ${end}`;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function renderField(label, value) {
+  if (!value) return '';
+  return `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px; color:#888; margin-bottom:4px; font-weight:600;">${label}</div>
+      <div style="font-size:14px; line-height:1.6; white-space:pre-wrap;">${escapeHtml(value)}</div>
+    </div>
+  `;
+}
+
+function getBadgeClass(type) {
+  const map = {
+    '마을사업': 'badge-blue',
+    '시장사업': 'badge-green',
+    '정부사업': 'badge-orange',
+    '자체사업': 'badge-gray',
+    '기타': 'badge-gray'
+  };
+  return map[type] || 'badge-gray';
+}
+
+function getStatusBadgeClass(status) {
+  const map = {
+    '완료': 'badge-green',
+    '진행중': 'badge-blue',
+    '계획중': 'badge-orange',
+    '중단': 'badge-red'
+  };
+  return map[status] || 'badge-gray';
+}
+
+// ── 초기 로드 ──
+loadDashboard();
+loadStats();
+</script>
+
+</body>
+</html>

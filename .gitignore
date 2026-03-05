@@ -6,3 +6,7 @@ __pycache__/
 node_modules/
 mini-projects/ai-news-hub/
 mini-projects/박승현/신도시-IR/node_modules/
+*.db
+*.db-shm
+*.db-wal
+package-lock.json

@@ -1,0 +1,15 @@
+{
+  "name": "gongzon-business-manager",
+  "version": "1.0.0",
+  "description": "공존공간 사업관리 도구 - PDF 업로드 + 사업 데이터베이스 + AI 분석",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "pdf-parse": "^1.1.1"
+  }
+}
