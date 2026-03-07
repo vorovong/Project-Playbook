@@ -40,11 +40,35 @@
 |------|------|------|
 | **"이어서"** | 세션 이어받기: 원본 검증 → 맥락 복구 → 작업 재개 | → `commands/이어서.md` |
 | **"크리틱"** | 크리틱 → 프론티어 비교 → 위치 파악 → 적용 제안 | → `commands/크리틱.md` |
-| **"커밋"** | 커밋 & 푸시 + progress 동반 규칙 자동 적용 | → `commands/커밋.md` |
 | **"정산"** | 미식가의주방 정산 맥락 로드 + 워크플로우 | → `commands/정산.md` |
+| **"기획 모드"** | 내부전략.md + 기획/ 파일 로드, 사업 논의 맥락 전환 | → `commands/기획모드.md` (예정) |
+
+> ~~"커밋" 주문~~ → 폐기. 규칙은 Hook(progress-check.sh + stop-checklist.sh)으로 자동 적용. "커밋해줘" 한마디면 됨.
 
 → 실수 프로토콜 (자동 작동): `commands/실수프로토콜.md`
 → 세션 관리 규칙: `commands/세션관리.md`
+
+---
+
+## 🔒 수호 루프 (Hooks) — 자동문 시스템
+
+> 주문은 승현님이 "부르면" 실행. Hook은 승현님이 **신경 안 써도** 알아서 작동.
+
+```
+세션 시작 ──→ 입력 ──→ 작업 중 ──→ 작업 완료 ──→ 압축 ──→ 종료
+   ✅          ✅        ✅          ✅          ✅       ✅
+```
+
+| # | Hook | 이벤트 | 비유 | 스크립트 |
+|---|------|--------|------|----------|
+| 1 | **부트 시퀀스** | SessionStart | 현관문 열면 불 켜짐 | `boot-sequence.sh` |
+| 2 | **프롬프트 백업** | UserPromptSubmit | 편지 보내기 전 복사본 | `prompt-backup.sh` |
+| 3 | **불약 방패** | PreToolUse (Edit/Write) | 금고 잠금장치 | `protect-files.sh` |
+| 4 | **커밋 규칙 경고** | PreToolUse (Bash) | 퇴근 전 서류 체크 | `progress-check.sh` |
+| 5 | **PDF 폭탄 감지** | PostToolUse (Read) | 가스 감지기 | `pdf-counter.sh` |
+| 6 | **퇴근 체크리스트** | Stop | 퇴근 전 체크리스트 | `stop-checklist.sh` |
+| 7 | **상태 백업** | PreCompact | 짐 싸기 | `pre-compact.sh` |
+| 8 | **세션 로그** | SessionEnd | 일지 자동 저장 | `session-log.sh` |
 
 ---
 
