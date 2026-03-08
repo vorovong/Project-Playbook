@@ -58,8 +58,10 @@ if [ "$CURRENT_DAY" -ge 28 ]; then
   28일부터 데이터 수집을 시작하세요."
 fi
 
-# 7. PDF 카운터 초기화
+# 7. PDF 카운터 초기화 + Stop hook 락 제거
 rm -f /tmp/tinkerbell-pdf-count
+STOP_LOCK="$(cd "$(dirname "$0")" && pwd)/.stop-lock"
+rm -f "$STOP_LOCK"
 
 # 8. 컨텍스트 주입 (이 출력이 Claude에게 전달됨)
 cat << BOOT_EOF

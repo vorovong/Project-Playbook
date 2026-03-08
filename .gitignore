@@ -10,3 +10,4 @@ mini-projects/박승현/신도시-IR/node_modules/
 *.db-shm
 *.db-wal
 package-lock.json
+.claude/hooks/.stop-lock

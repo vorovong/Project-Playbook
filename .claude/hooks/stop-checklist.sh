@@ -7,20 +7,6 @@
 
 INPUT=$(cat)
 
-# 무한루프 방지: stop_hook_active가 true이면 무조건 통과
-STOP_ACTIVE=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    print(str(data.get('stop_hook_active', False)).lower())
-except:
-    print('false')
-" 2>/dev/null)
-
-if [ "$STOP_ACTIVE" = "true" ]; then
-  exit 0
-fi
-
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
 
@@ -45,10 +31,10 @@ if [ "$MINI_CHANGED" -gt 0 ] && [ "$PROGRESS_CHANGED" -eq 0 ]; then
   ISSUES="${ISSUES}mini-projects 변경이 있는데 progress 갱신이 안 됐어요. "
 fi
 
-# 문제 있으면 차단 + 안내
+# 문제 있으면 안내만 하고 통과 (차단하면 무한루프 발생)
 if [ -n "$ISSUES" ]; then
   echo "퇴근 체크리스트: ${ISSUES}커밋하고 마무리할까요? 승현님이 괜찮다고 하면 그냥 멈추세요." >&2
-  exit 2
+  exit 0
 fi
 
 # 문제 없으면 조용히 통과
