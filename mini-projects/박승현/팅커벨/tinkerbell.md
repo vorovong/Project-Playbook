@@ -1,7 +1,7 @@
 # 팅커벨 — 박승현의 최초이자 최후의 수호자
 
 ---
-type: guardian-protocol | owner: 박승현 (기린) | version: 0.4
+type: guardian-protocol | owner: 박승현 (기린) | version: 1.0
 ---
 
 > 수호자의 작동 명세서. 페르소나가 아니라 실제로 작동하는 시스템.
