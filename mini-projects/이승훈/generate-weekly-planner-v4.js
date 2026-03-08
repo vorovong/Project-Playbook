@@ -154,53 +154,78 @@ function resetSheet() {
   ui.alert('✅ 초기화 완료! 새 주차를 시작하세요.');
 }
 
-// 입력 칸 초기화 함수
+// 입력 칸 초기화 + 다음 주 날짜 자동 채우기
 function resetInputCells(sheet) {
-  // 기본 정보 초기화
-  sheet.getRange('B2').setValue('');  // 월
-  sheet.getRange('D2').setValue('');  // 주차
-  sheet.getRange('F2').setValue('');  // 기간
-  sheet.getRange('J2').setValue('');  // 작성자
-  sheet.getRange('L2').setValue('');  // 이번 주 한마디
+  // ===== 다음 주 월요일 계산 =====
+  var today = new Date();
+  var dayOfWeek = today.getDay(); // 0=일, 1=월, ...
+  // 다음 주 월요일까지 남은 일수
+  var daysUntilNextMon = (8 - dayOfWeek) % 7;
+  if (daysUntilNextMon === 0) daysUntilNextMon = 7; // 오늘이 월요일이면 다음 주 월요일
+  var nextMon = new Date(today);
+  nextMon.setDate(today.getDate() + daysUntilNextMon);
 
-  // 목표 초기화 (행 6~8, 열 C~J = 목표내용, K~M = 완료기준, N~O = 달성체크)
+  // 다음 주 일요일
+  var nextSun = new Date(nextMon);
+  nextSun.setDate(nextMon.getDate() + 6);
+
+  // 월, 주차 계산
+  var nextMonth = nextMon.getMonth() + 1;
+  var weekOfMonth = Math.ceil(nextMon.getDate() / 7);
+
+  // 날짜 포맷 함수
+  function fmt(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
+
+  // ===== 기본 정보 자동 채우기 =====
+  sheet.getRange('B2').setValue(nextMonth);  // 월
+  sheet.getRange('D2').setValue(weekOfMonth);  // 주차
+  sheet.getRange('F2').setValue(fmt(nextMon) + ' ~ ' + fmt(nextSun));  // 기간
+  // 작성자는 유지 (안 지움)
+  sheet.getRange('L2').setValue('');  // 이번 주 한마디만 초기화
+
+  // ===== 날짜 행 자동 채우기 (행 12, 각 요일) =====
+  var dayCols = [2, 4, 6, 8, 10, 12, 14];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(nextMon);
+    d.setDate(nextMon.getDate() + i);
+    sheet.getRange(12, dayCols[i]).setValue(fmt(d));
+  }
+
+  // ===== 나머지 초기화 =====
+
+  // 목표 초기화 (행 6~8)
   for (var r = 6; r <= 8; r++) {
     sheet.getRange(r, 3, 1, 8).setValue('');   // 목표 내용
     sheet.getRange(r, 11, 1, 3).setValue('');  // 완료 기준
-    sheet.getRange(r, 14, 1, 2).setValue('☐'); // 달성 체크 리셋
+    sheet.getRange(r, 14, 1, 2).setValue('☐ 미완'); // 달성 체크 리셋
   }
 
-  // 일별 계획 초기화
-  // 날짜 행 (행 11)
+  // 컨디션 행 초기화 (행 13)
   for (var col = 2; col <= 14; col += 2) {
-    sheet.getRange(11, col, 1, 2).setValue('');
+    sheet.getRange(13, col, 1, 2).setValue('');
   }
-  // 컨디션 행 (행 12)
-  for (var col = 2; col <= 14; col += 2) {
-    sheet.getRange(12, col, 1, 2).setValue('');
-  }
-  // 할일 3줄 (행 14~16) + 목표번호
-  for (var r = 14; r <= 16; r++) {
+  // 할일 3줄 (행 15~17) + 목표번호
+  for (var r = 15; r <= 17; r++) {
     for (var col = 2; col <= 14; col += 2) {
       sheet.getRange(r, col).setValue('');      // 할일
       sheet.getRange(r, col + 1).setValue('');  // 목표번호
     }
   }
-  // 메모 행 (행 17)
+  // 메모 행 (행 18)
   for (var col = 2; col <= 14; col += 2) {
-    sheet.getRange(17, col, 1, 2).setValue('');
+    sheet.getRange(18, col, 1, 2).setValue('');
   }
 
-  // 프로젝트 초기화 (행 20~24)
-  for (var r = 20; r <= 24; r++) {
+  // 프로젝트 초기화 (행 22~26)
+  for (var r = 22; r <= 26; r++) {
     sheet.getRange(r, 2, 1, 4).setValue('');   // 프로젝트명
     sheet.getRange(r, 6, 1, 5).setValue('');   // 이번 주 할 것
     sheet.getRange(r, 11, 1, 2).setValue('');  // 진행상태
     sheet.getRange(r, 13, 1, 3).setValue('');  // 비고
   }
 
-  // 미팅 초기화 (행 27~31)
-  for (var r = 27; r <= 31; r++) {
+  // 미팅 초기화 (행 30~34)
+  for (var r = 30; r <= 34; r++) {
     sheet.getRange(r, 1).setValue('');  // 날짜
     sheet.getRange(r, 2).setValue('');  // 시간
     sheet.getRange(r, 3, 1, 2).setValue('');  // 대상
@@ -208,11 +233,11 @@ function resetInputCells(sheet) {
     sheet.getRange(r, 8).setValue('');  // 비고
     sheet.getRange(r, 9).setValue('');  // 마감일
     sheet.getRange(r, 10, 1, 4).setValue('');  // 내용
-    sheet.getRange(r, 14, 1, 2).setValue('☐');  // 완료 체크 리셋
+    sheet.getRange(r, 14, 1, 2).setValue('☐ 미완');  // 완료 체크 리셋
   }
 
-  // 주간 회고 초기화 (행 34~37)
-  for (var r = 34; r <= 37; r++) {
+  // 주간 회고 초기화 (행 37~40)
+  for (var r = 37; r <= 40; r++) {
     sheet.getRange(r, 4, 1, 12).setValue('');
   }
 }
@@ -790,6 +815,66 @@ function resetInputCells(sheet) {
     cell.alignment = { vertical: 'middle', wrapText: true };
     row.height = text ? 22 : 10;
   });
+
+  // ===== 드롭다운(데이터 유효성 검사) 직접 설정 =====
+
+  // 컨디션 드롭다운 (행 13, 각 요일 병합 셀)
+  const condList = ['"💚 좋음,🟡 보통,🔴 나쁨"'];
+  dayCols.forEach(col => {
+    ws.getCell(13, col).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: condList,
+      showDropDown: false,
+    };
+  });
+
+  // 목표 번호 드롭다운 (행 15~17, 각 요일의 목표열 = dayCols[i]+1)
+  const goalNumList = ['"①,②,③"'];
+  for (let r = 15; r <= 17; r++) {
+    dayCols.forEach(col => {
+      ws.getCell(r, col + 1).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: goalNumList,
+        showDropDown: false,
+      };
+    });
+  }
+
+  // 달성 여부 드롭다운 (행 6~8, 열 14)
+  const checkList = ['"☐ 미완,✅ 완료"'];
+  for (let r = 6; r <= 8; r++) {
+    ws.getCell(r, 14).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: checkList,
+      showDropDown: false,
+    };
+  }
+
+  // 프로젝트 진행상태 드롭다운 (행 22~26, 열 11)
+  const statusList = ['"🔴 시작전,🟡 진행중,🟢 완료"'];
+  for (let r = 22; r <= 26; r++) {
+    ws.getCell(r, 11).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: statusList,
+      showDropDown: false,
+    };
+  }
+
+  // 마감 완료 드롭다운 (행 30~34, 열 14)
+  for (let r = 30; r <= 34; r++) {
+    ws.getCell(r, 14).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: checkList,
+      showDropDown: false,
+    };
+  }
+
+  console.log('드롭다운 설정 완료');
 
   // 저장
   const outputPath = 'C:\\Users\\leeha\\OneDrive\\바탕 화면\\주간계획서-최종판.xlsx';
