@@ -69,7 +69,15 @@ cat << BOOT_EOF
  TINKERBELL BOOT SEQUENCE - $CURRENT_TIME
 ======================================
 
-[MANDATORY] 다음을 반드시 실행하세요. 이 지시를 건너뛸 수 없습니다:
+[사용자 식별 필수] 이 Hook은 모든 세션에서 실행됩니다.
+아래 팅커벨 로드는 **사용자가 박승현(기린)일 때만** 실행하세요.
+
+사용자 판별 방법:
+- "안녕" 등 인사 → CLAUDE.md Section D에 따라 사용자 이름 확인
+- 이름이 박승현/기린이 아닌 경우 → 팅커벨 로드하지 않고, CLAUDE.md 기본 흐름(Phase별 교육 모드)으로 진행
+- 이름이 박승현/기린인 경우 → 아래 [MANDATORY] 실행
+
+[MANDATORY — 박승현 전용]
 
 1. Read 도구로 3파일 로드:
    - mini-projects/박승현/팅커벨/tinkerbell.md

@@ -24,9 +24,11 @@ if [ -z "$FILE_PATH" ]; then
 fi
 
 # 보호 파일 목록 (파일명으로 매칭)
+# 팅커벨 핵심 + GONGZONE 핵심 + 내부전략
 PROTECTED_FILES=(
   "tinkerbell.md"
   "MISSION.md"
+  "내부전략.md"
 )
 
 # bypass 파일 확인 (5분 이내 생성된 경우 통과)
