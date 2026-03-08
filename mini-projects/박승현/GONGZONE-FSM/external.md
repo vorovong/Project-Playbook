@@ -1,3 +1,12 @@
+---
+type: module
+title: External — 대외협력
+parent: main.md
+status: active
+created: 2026-02-23
+last-updated: 2026-03-08
+---
+
 # External — 대외협력
 
 > 상위 문서: `main.md` | 문체 규칙: `writing-style.md`

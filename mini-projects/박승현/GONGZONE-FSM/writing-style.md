@@ -1,3 +1,12 @@
+---
+type: module
+title: Writing Style — 문체 가이드
+parent: main.md
+status: active
+created: 2026-02-23
+last-updated: 2026-03-08
+---
+
 # Writing Style — 문체 가이드
 
 > 상위 문서: `main.md`

@@ -1,3 +1,12 @@
+---
+type: module
+title: Marketing — 마케팅
+parent: main.md
+status: active
+created: 2026-02-23
+last-updated: 2026-03-08
+---
+
 # Marketing — 마케팅
 
 > 상위 문서: `main.md` | 문체 규칙: `writing-style.md`
