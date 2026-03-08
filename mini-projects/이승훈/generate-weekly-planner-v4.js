@@ -19,11 +19,26 @@ function onOpen() {
     .addItem('💾 이번 주 저장하기', 'saveWeek')
     .addItem('📄 새 주차 시작', 'resetSheet')
     .addSeparator()
-    .addItem('🔧 드롭다운 설정 (최초 1회)', 'setupDropdowns')
+    .addItem('📌 도구 패널 열기', 'showSidebar')
+    .addItem('🔧 초기 설정 (최초 1회)', 'initialSetup')
     .addToUi();
 }
 
-// 🔧 드롭다운 설정 — 최초 1회만 실행하면 됨
+// 🔧 초기 설정 — 최초 1회만 실행 (드롭다운 + 도구 패널 자동 열기)
+function initialSetup() {
+  setupDropdowns();
+  enableAutoSidebar();
+  showSidebar();
+
+  SpreadsheetApp.getUi().alert(
+    '✅ 초기 설정 완료!\\n\\n' +
+    '📌 오른쪽에 도구 패널이 나타났습니다!\\n' +
+    '큰 버튼으로 저장/초기화를 할 수 있어요.\\n\\n' +
+    '다음부터 시트를 열면 자동으로 도구 패널이 뜹니다.'
+  );
+}
+
+// 🔧 드롭다운 설정
 function setupDropdowns() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('주간계획서');
@@ -76,15 +91,6 @@ function setupDropdowns() {
     sheet.getRange(r, 14).setDataValidation(deadCheckRule);
   }
 
-  SpreadsheetApp.getUi().alert(
-    '✅ 드롭다운 설정 완료!\\n\\n' +
-    '이제 다음 칸들을 클릭하면 선택 목록이 나타납니다:\\n' +
-    '• 컨디션: 💚좋음 / 🟡보통 / 🔴나쁨\\n' +
-    '• 목표 번호: ① / ② / ③\\n' +
-    '• 달성 여부: ☐미완 / ✅완료\\n' +
-    '• 진행상태: 🔴시작전 / 🟡진행중 / 🟢완료\\n' +
-    '• 마감 완료: ☐미완 / ✅완료'
-  );
 }
 
 // 💾 저장 버튼: 현재 내용을 새 시트로 복사 + 원본 초기화
@@ -240,6 +246,90 @@ function resetInputCells(sheet) {
   for (var r = 37; r <= 40; r++) {
     sheet.getRange(r, 4, 1, 12).setValue('');
   }
+}
+
+// ===== 📌 도구 패널 (사이드바) =====
+
+function showSidebar() {
+  var html = HtmlService.createHtmlOutput(getSidebarHtml())
+    .setTitle('📋 계획서 도구');
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function getSidebarHtml() {
+  return '<style>'
+    + 'body{font-family:Arial,sans-serif;padding:20px;background:#FAFAFA;margin:0;}'
+    + '.btn{display:block;width:100%;margin:12px 0;font-weight:bold;border-radius:14px;cursor:pointer;border:none;color:white;text-align:center;transition:opacity 0.2s;}'
+    + '.btn:hover{opacity:0.85;}'
+    + '.btn:active{transform:scale(0.97);}'
+    + '.save{background:linear-gradient(135deg,#2E7D32,#43A047);font-size:18px;padding:24px 12px;}'
+    + '.new{background:linear-gradient(135deg,#1565C0,#1E88E5);font-size:15px;padding:18px 12px;}'
+    + '.msg{padding:14px;margin:12px 0;border-radius:10px;background:#E8F5E9;font-size:13px;display:none;line-height:1.5;}'
+    + '.title{text-align:center;font-size:20px;font-weight:bold;margin:0 0 24px 0;}'
+    + '.tip{font-size:11px;color:#888;text-align:center;margin-top:24px;line-height:1.6;}'
+    + '</style>'
+    + '<div class="title">📋 계획서 도구</div>'
+    + '<div id="msg" class="msg"></div>'
+    + '<button class="btn save" onclick="runSave(this)">💾 이번 주 저장하기</button>'
+    + '<button class="btn new" onclick="runReset(this)">📄 새 주차 시작</button>'
+    + '<div class="tip">💡 저장하면 이번 주가 새 시트로 복사되고<br>다음 주 날짜가 자동으로 채워져요</div>'
+    + '<script>'
+    + 'function showMsg(t){var e=document.getElementById("msg");e.innerText=t;e.style.display="block";setTimeout(function(){e.style.display="none";},6000);}'
+    + 'function runSave(b){if(!confirm("이번 주 내용을 저장하고 새 주차로 넘어갈까요?"))return;b.disabled=true;b.textContent="저장 중...";google.script.run.withSuccessHandler(function(m){showMsg(m);b.disabled=false;b.textContent="\\ud83d\\udcbe 이번 주 저장하기";}).withFailureHandler(function(e){showMsg("오류: "+e.message);b.disabled=false;b.textContent="\\ud83d\\udcbe 이번 주 저장하기";}).saveWeekSidebar();}'
+    + 'function runReset(b){if(!confirm("저장 안 한 내용은 사라집니다. 계속할까요?"))return;b.disabled=true;google.script.run.withSuccessHandler(function(m){showMsg(m);b.disabled=false;}).withFailureHandler(function(e){showMsg("오류: "+e.message);b.disabled=false;}).resetSheetSidebar();}'
+    + '</script>';
+}
+
+// 사이드바에서 호출 — 저장
+function saveWeekSidebar() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('주간계획서');
+  if (!sheet) return '⚠️ "주간계획서" 시트를 찾을 수 없습니다.';
+
+  var month = sheet.getRange('B2').getValue();
+  var week = sheet.getRange('D2').getValue();
+  var period = sheet.getRange('F2').getValue();
+
+  var sheetName = month + '월' + week + '주차';
+  if (period) sheetName += ' (' + period + ')';
+
+  var finalName = sheetName;
+  var counter = 1;
+  while (ss.getSheetByName(finalName)) { counter++; finalName = sheetName + '_' + counter; }
+
+  var newSheet = sheet.copyTo(ss);
+  newSheet.setName(finalName);
+  ss.setActiveSheet(newSheet);
+  ss.moveActiveSheet(ss.getNumSheets());
+
+  resetInputCells(sheet);
+  ss.setActiveSheet(sheet);
+
+  return '✅ "' + finalName + '" 저장 완료! 다음 주 날짜가 채워졌습니다.';
+}
+
+// 사이드바에서 호출 — 초기화
+function resetSheetSidebar() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('주간계획서');
+  if (!sheet) return '⚠️ 시트를 찾을 수 없습니다.';
+
+  resetInputCells(sheet);
+  return '✅ 초기화 완료! 새 주차를 시작하세요.';
+}
+
+// 시트 열 때 자동으로 도구 패널 표시 (설치형 트리거)
+function enableAutoSidebar() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'showSidebar') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  ScriptApp.newTrigger('showSidebar')
+    .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
+    .onOpen()
+    .create();
 }
 `;
 
@@ -781,21 +871,22 @@ function resetInputCells(sheet) {
     ['   • Apps Script 탭을 닫고 구글 시트로 돌아오기'],
     ['   • 시트를 새로고침(F5) → 상단에 "📋 계획서" 메뉴가 나타남!'],
     [''],
-    ['3단계: 드롭다운 설정 (최초 1회만)', { bold: true, size: 13 }],
-    ['   • "📋 계획서" → "🔧 드롭다운 설정 (최초 1회)" 클릭'],
+    ['3단계: 초기 설정 (최초 1회만)', { bold: true, size: 13 }],
+    ['   • "📋 계획서" → "🔧 초기 설정 (최초 1회)" 클릭'],
     ['   • 승인 팝업이 뜨면 "확인" → 구글 로그인 → "허용" (아까 미식가의 주방과 같은 과정!)'],
-    ['   • 한 번만 하면 다음부터는 자동으로 드롭다운이 유지됨'],
+    ['   • 한 번만 하면 드롭다운 + 도구 패널이 자동으로 설정됨'],
     [''],
     ['4단계: 사용하기', { bold: true, size: 13 }],
+    ['   • 오른쪽에 📋 도구 패널이 자동으로 뜹니다!'],
+    ['   • 💾 이번 주 저장하기 — 큰 초록 버튼 클릭'],
+    ['   • 📄 새 주차 시작 — 파란 버튼 클릭'],
     ['   • 회색 예시 글씨를 지우고 본인 내용 작성'],
-    ['   • 드롭다운 칸은 클릭하면 선택 목록이 뜸 (직접 입력 안 해도 됨!)'],
-    ['   • 한 주가 끝나면: "📋 계획서" → "💾 이번 주 저장하기" 클릭'],
-    ['   • 현재 내용이 "3월2주차" 같은 이름의 새 시트로 저장됨'],
-    ['   • 주간계획서 시트는 자동으로 빈 양식으로 초기화됨'],
+    ['   • 드롭다운 칸은 클릭하면 선택 목록이 뜸'],
+    ['   • 저장하면 이번 주가 새 시트로 복사 + 다음 주 날짜 자동 채우기!'],
     ['   • 하단 시트 탭에서 지난 주 기록을 언제든 볼 수 있음!'],
     [''],
     ['💡 팁', { bold: true, size: 13 }],
-    ['   • 저장 안 하고 새로 시작하고 싶으면: "📋 계획서" → "📄 새 주차 시작"'],
+    ['   • 도구 패널이 안 보이면: "📋 계획서" → "📌 도구 패널 열기"'],
     [''],
     ['📌 드롭다운 목록', { bold: true, size: 13 }],
     ['   • 컨디션: 💚좋음 / 🟡보통 / 🔴나쁨'],
