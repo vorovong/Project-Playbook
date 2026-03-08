@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================
-# Hook 5: progress 동반 커밋 경고 (PreToolUse - Bash)
+# Hook 4: progress 동반 커밋 경고 (PreToolUse - Bash)
 # mini-projects/ 변경이 있는데 progress/ 없이 커밋하면 경고
 # 증거: MEMORY.md 규칙 + 3/2 잘자 루틴에서 progress 누락
 # =============================================================
