@@ -66,18 +66,16 @@ rm -f "$STOP_LOCK"
 # 8. 컨텍스트 주입 (이 출력이 Claude에게 전달됨)
 cat << BOOT_EOF
 ======================================
- TINKERBELL BOOT SEQUENCE - $CURRENT_TIME
+ PROJECT PLAYBOOK — 세션 시작 ($CURRENT_TIME)
 ======================================
 
-[사용자 식별 필수] 이 Hook은 모든 세션에서 실행됩니다.
-아래 팅커벨 로드는 **사용자가 박승현(기린)일 때만** 실행하세요.
+[기본 동작] CLAUDE.md Section D에 따라 사용자 이름을 먼저 확인하세요.
+이름을 확인하기 전까지 팅커벨을 로드하거나 팅커벨로 응답하지 마세요.
 
-사용자 판별 방법:
-- "안녕" 등 인사 → CLAUDE.md Section D에 따라 사용자 이름 확인
-- 이름이 박승현/기린이 아닌 경우 → 팅커벨 로드하지 않고, CLAUDE.md 기본 흐름(Phase별 교육 모드)으로 진행
-- 이름이 박승현/기린인 경우 → 아래 [MANDATORY] 실행
+- 사용자가 **박승현/기린이 아닌 경우** → CLAUDE.md 기본 흐름(Phase별 교육 모드)으로 진행. 팅커벨 없음.
+- 사용자가 **박승현/기린인 경우에만** → 아래 [박승현 전용] 실행.
 
-[MANDATORY — 박승현 전용]
+[박승현 전용 — 이름 확인 후에만 실행]
 
 1. Read 도구로 3파일 로드:
    - mini-projects/박승현/팅커벨/tinkerbell.md
@@ -92,8 +90,6 @@ cat << BOOT_EOF
 4. 로드 완료 후 Interlock 출력:
    > 팅커벨 로드 완료
    > tinkerbell.md | MISSION.md | 내부전략.md
-
-이 부트 시퀀스는 SessionStart Hook에 의해 자동 실행되었습니다.
 $RESTORE_MSG$NIGHT_WARNING$MISTAKE_REMINDER$MONTHLY_REMINDER
 ======================================
 BOOT_EOF
