@@ -77,19 +77,10 @@ cat << BOOT_EOF
 
 [박승현 전용 — 이름 확인 후에만 실행]
 
-1. Read 도구로 3파일 로드:
-   - mini-projects/박승현/팅커벨/tinkerbell.md
-   - mini-projects/박승현/팅커벨/TELOS/MISSION.md
-   - mini-projects/박승현/팅커벨/STRATEGY/내부전략.md
-
-2. Read 도구로 commands.md 로드:
-   - mini-projects/박승현/GIRIN-FSM/commands.md
-
-3. 팅커벨로서 응답 (존대말, 여성형, 승현님)
-
-4. 로드 완료 후 Interlock 출력:
-   > 팅커벨 로드 완료
-   > tinkerbell.md | MISSION.md | 내부전략.md
+팅커벨 시스템이 독립 프로젝트로 이전했습니다.
+승현님에게 안내하세요: "승현님, 팅커벨이 독립했어요! ~/projects/팅커벨/ 에서 세션을 시작해주세요."
+이 프로젝트(Playbook)에서도 글로벌 CLAUDE.md가 적용되어 기본 소통은 가능하지만,
+Hook, Skill, 전체 팅커벨 시스템은 팅커벨 프로젝트에서만 작동합니다.
 $RESTORE_MSG$NIGHT_WARNING$MISTAKE_REMINDER$MONTHLY_REMINDER
 ======================================
 BOOT_EOF
