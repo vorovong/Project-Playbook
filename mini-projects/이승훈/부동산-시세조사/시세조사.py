@@ -298,14 +298,15 @@ def create_excel(dong_info, datasets, filename):
         link_font = Font(color="0563C1", underline="single")
 
         if code == "A1":
-            headers = ["매물명", "유형", "주소", "면적(m2)", "면적(평)", "층", "매매가(만원)", "평단가(만원/평)", "설명", "네이버부동산"]
+            headers = ["매물명", "유형", "주소", "면적(m2)", "면적(평)", "층", "매매가(만원)", "평단가(만원/평)", "설명", "네이버부동산", "링크(복사용)"]
         elif code == "B1":
-            headers = ["매물명", "유형", "주소", "면적(m2)", "면적(평)", "층", "전세가(만원)", "설명", "네이버부동산"]
+            headers = ["매물명", "유형", "주소", "면적(m2)", "면적(평)", "층", "전세가(만원)", "설명", "네이버부동산", "링크(복사용)"]
         else:
-            headers = ["매물명", "유형", "주소", "면적(m2)", "면적(평)", "층", "보증금(만원)", "월세(만원)", "설명", "네이버부동산"]
+            headers = ["매물명", "유형", "주소", "면적(m2)", "면적(평)", "층", "보증금(만원)", "월세(만원)", "설명", "네이버부동산", "링크(복사용)"]
 
         style_header(ws, headers)
-        link_col = len(headers)  # 마지막 컬럼
+        link_col = len(headers) - 1  # 하이퍼링크 컬럼
+        url_col = len(headers)       # URL 텍스트 컬럼
 
         for i, item in enumerate(data, 2):
             ws.cell(row=i, column=1, value=item["매물명"])
@@ -327,12 +328,13 @@ def create_excel(dong_info, datasets, filename):
                 ws.cell(row=i, column=8, value=item["월세_만원"]).number_format = num_fmt
                 ws.cell(row=i, column=9, value=item["설명"])
 
-            # 하이퍼링크
+            # 하이퍼링크 + URL 텍스트
             url = item.get("링크", "")
             if url:
                 cell = ws.cell(row=i, column=link_col, value="보기")
                 cell.hyperlink = url
                 cell.font = link_font
+                ws.cell(row=i, column=url_col, value=url)
 
         auto_width(ws)
         summary_rows.append((f"{label} 매물 수", f"{len(data)}건"))
