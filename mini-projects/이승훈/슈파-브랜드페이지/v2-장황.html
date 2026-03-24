@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUPA — 슈퍼파트너스 | 공존공간</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'NanumSquareRound';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRoundR.woff') format('woff');
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: 'NanumSquareRound';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRoundB.woff') format('woff');
+      font-weight: 700;
+    }
+    @font-face {
+      font-family: 'NanumSquareRound';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRoundEB.woff') format('woff');
+      font-weight: 800;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'NanumSquareRound', 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      line-height: 1.8;
+      overflow-x: hidden;
+    }
+
+    /* ── 네비게이션 ── */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(10px);
+    }
+    nav .logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: #888;
+      letter-spacing: 2px;
+      text-decoration: none;
+    }
+    nav .back-link {
+      font-size: 13px;
+      color: #00B8FF;
+      text-decoration: none;
+      border: 1px solid #00B8FF;
+      padding: 6px 16px;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+    nav .back-link:hover {
+      background: #00B8FF;
+      color: #0a0a0a;
+    }
+
+    /* ── 히어로 ── */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 20px;
+      position: relative;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: linear-gradient(transparent, #0a0a0a);
+    }
+    .hero .brand-name {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900;
+      font-size: clamp(60px, 12vw, 140px);
+      color: #fff;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .hero .brand-name span {
+      color: #00B8FF;
+    }
+    .hero .tagline {
+      font-size: clamp(16px, 2.5vw, 22px);
+      color: #999;
+      margin-top: 24px;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+    .hero .sub {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      color: #555;
+      margin-top: 12px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      animation: bounce 2s infinite;
+    }
+    .scroll-indicator span {
+      display: block;
+      width: 1px;
+      height: 40px;
+      background: #333;
+      margin: 0 auto;
+    }
+    .scroll-indicator p {
+      font-size: 10px;
+      color: #444;
+      letter-spacing: 3px;
+      margin-top: 8px;
+      font-family: 'Montserrat', sans-serif;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── 공통 섹션 ── */
+    section {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 120px 24px;
+    }
+    .section-label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      color: #00B8FF;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.4;
+      margin-bottom: 32px;
+    }
+    .section-text {
+      font-size: 16px;
+      color: #aaa;
+      line-height: 2;
+      margin-bottom: 20px;
+    }
+    .highlight {
+      color: #fff;
+      font-weight: 700;
+    }
+    .accent {
+      color: #00B8FF;
+      font-weight: 700;
+    }
+
+    /* ── 구분선 ── */
+    .divider {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .divider hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+    }
+
+    /* ── 문제 섹션 ── */
+    .problem-list {
+      list-style: none;
+      margin: 32px 0;
+    }
+    .problem-list li {
+      padding: 16px 0;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 16px;
+      color: #888;
+    }
+    .problem-list li strong {
+      color: #ccc;
+    }
+
+    /* ── 숫자 강조 ── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      margin: 48px 0;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 32px 16px;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      transition: border-color 0.3s;
+    }
+    .stat-item:hover {
+      border-color: #00B8FF;
+    }
+    .stat-number {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: #00B8FF;
+      line-height: 1;
+    }
+    .stat-unit {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 20px;
+      color: #00B8FF;
+    }
+    .stat-desc {
+      font-size: 14px;
+      color: #777;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    /* ── 서비스 카드 ── */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin: 48px 0;
+    }
+    .service-card {
+      background: #111;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+    .service-card:hover {
+      border-color: #00B8FF;
+      transform: translateY(-4px);
+    }
+    .service-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    .service-card h3 {
+      font-size: 18px;
+      color: #fff;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    .service-card p {
+      font-size: 14px;
+      color: #888;
+      line-height: 1.8;
+    }
+    .service-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-top: 12px;
+      font-weight: 700;
+    }
+    .badge-now {
+      background: rgba(0, 184, 255, 0.15);
+      color: #00B8FF;
+    }
+    .badge-soon {
+      background: rgba(255, 255, 255, 0.08);
+      color: #666;
+    }
+
+    /* ── 시나리오 ── */
+    .scenario {
+      background: #111;
+      border-radius: 16px;
+      padding: 40px;
+      margin: 48px 0;
+      border: 1px solid #1a1a1a;
+    }
+    .scenario h3 {
+      font-size: 20px;
+      color: #fff;
+      margin-bottom: 24px;
+    }
+    .scenario-step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+    }
+    .step-marker {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #00B8FF;
+      color: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .scenario-step p {
+      font-size: 15px;
+      color: #aaa;
+      line-height: 1.8;
+    }
+    .scenario-result {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #1a1a1a;
+      font-size: 18px;
+      color: #00B8FF;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* ── 원칙 ── */
+    .principle-list {
+      margin: 40px 0;
+    }
+    .principle {
+      display: flex;
+      gap: 20px;
+      padding: 24px 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .principle-num {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a1a;
+      flex-shrink: 0;
+      width: 48px;
+    }
+    .principle h4 {
+      font-size: 17px;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .principle p {
+      font-size: 14px;
+      color: #777;
+      line-height: 1.8;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      padding: 120px 24px 160px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .cta-section .section-title {
+      margin-bottom: 16px;
+    }
+    .cta-section .section-text {
+      margin-bottom: 40px;
+    }
+    .cta-button {
+      display: inline-block;
+      padding: 16px 48px;
+      background: #00B8FF;
+      color: #0a0a0a;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .cta-button:hover {
+      background: #fff;
+      transform: scale(1.05);
+    }
+    .cta-sub {
+      font-size: 13px;
+      color: #555;
+      margin-top: 16px;
+    }
+
+    /* ── 푸터 ── */
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      border-top: 1px solid #1a1a1a;
+      font-size: 12px;
+      color: #444;
+      line-height: 2;
+    }
+    footer a {
+      color: #555;
+      text-decoration: none;
+    }
+    footer .source {
+      max-width: 600px;
+      margin: 16px auto 0;
+      font-size: 11px;
+      color: #333;
+      line-height: 1.8;
+    }
+
+    /* ── 반응형 ── */
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      section { padding: 80px 20px; }
+      .stat-row { grid-template-columns: 1fr; gap: 16px; }
+      .service-grid { grid-template-columns: 1fr; }
+      .scenario { padding: 24px; }
+      .cta-section { padding: 80px 20px 120px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 네비게이션 -->
+  <nav>
+    <a href="https://spacegongzone.com" class="logo">GONGZONE</a>
+    <a href="https://spacegongzone.com" class="back-link">홈으로</a>
+  </nav>
+
+  <!-- 히어로 -->
+  <section class="hero">
+    <p class="sub">super partners</p>
+    <h1 class="brand-name">SU<span>P</span>A</h1>
+    <p class="tagline">사장님 옆에서 같이 일합니다</p>
+    <div class="scroll-indicator">
+      <span></span>
+      <p>SCROLL</p>
+    </div>
+  </section>
+
+  <!-- 1. 공감 -->
+  <div class="divider"><hr></div>
+  <section>
+    <p class="section-label">Story</p>
+    <h2 class="section-title">사장님, 장사 말고 해야 할 일이<br>너무 많지 않으십니까?</h2>
+    <p class="section-text">
+      가게 문 열기 전에 식자재 주문.<br>
+      가게 문 닫고 나서 리뷰 답변, SNS 올리기, 장부 정리.
+    </p>
+    <p class="section-text">
+      사장님이 진짜 잘하시는 건 <span class="highlight">요리</span>이고 <span class="highlight">손님 맞이</span>인데,<br>
+      정작 그 시간은 줄고 잡무 시간만 늘어갑니다.
+    </p>
+
+    <ul class="problem-list">
+      <li>매출의 <strong>절반 가까이</strong>가 재료비로 나갑니다</li>
+      <li>남는 건 월 <strong>200만 원</strong> 남짓</li>
+      <li>문 닫으신 사장님 절반이 <strong>"재료비 때문"</strong>이라고 하셨습니다</li>
+    </ul>
+
+    <p class="section-text">
+      혼자서 가격 비교하고, 혼자서 주문하고, 혼자서 관리하고 계십니다.<br>
+      <span class="accent">"같이 하면 어떨까?"</span> — 여기서 슈파가 시작됐습니다.
+    </p>
+  </section>
+
+  <!-- 2. 슈파 소개 -->
+  <div class="divider"><hr></div>
+  <section>
+    <p class="section-label">About</p>
+    <h2 class="section-title">IT 회사가 만든 서비스가 아닙니다</h2>
+    <p class="section-text">
+      <span class="highlight">공존공간</span>이라는 이름으로 지난 2년간
+      수원에서 사장님들과 직접 만나고, 같이 일하고, 문제를 풀면서 만들었습니다.
+    </p>
+    <p class="section-text">
+      프레젠테이션이 아니라 <span class="highlight">주방 옆에서 시작했습니다.</span>
+    </p>
+
+    <p class="section-text">
+      사장님한테 필요한 건 "최신 기술"이 아니라<br>
+      <span class="accent">"당장 도움 되는 것"</span>이라는 걸 압니다.
+    </p>
+  </section>
+
+  <!-- 3. 서비스 -->
+  <div class="divider"><hr></div>
+  <section>
+    <p class="section-label">Service</p>
+    <h2 class="section-title">사장님이 장사에만 집중할 수 있게,<br>나머지를 같이 합니다</h2>
+
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="service-icon">🛒</div>
+        <h3>공동구매</h3>
+        <p>같이 사서 단가를 낮춥니다.<br>혼자 비교하고 주문할 필요 없습니다.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📊</div>
+        <h3>거래 분석</h3>
+        <p>거래명세서를 넣으면 자동으로 분석해 드립니다.<br>장부 정리에 쓰는 시간을 줄여드립니다.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">💬</div>
+        <h3>리뷰 답변</h3>
+        <p>사장님 말투 그대로 답변 초안을 만들어 드립니다.<br>확인하고 전송만 누르시면 됩니다.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📱</div>
+        <h3>SNS 포스팅</h3>
+        <p>가게 소식을 자동으로 포스팅합니다.<br>사장님은 사진만 찍으시면 됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AX -->
+  <div class="divider"><hr></div>
+  <section>
+    <p class="section-label">Vision</p>
+    <h2 class="section-title">사장님이 모르는 사이에,<br>가게가 똑똑해집니다</h2>
+    <p class="section-text">
+      공동구매, 거래 분석, 리뷰 답변, SNS 포스팅 —<br>
+      따로가 아니라 <span class="highlight">하나의 흐름</span>입니다.
+    </p>
+    <p class="section-text">
+      큰 프랜차이즈에는 본사가 해주는 일들이 있습니다.<br>
+      <span class="accent">슈파는 동네 사장님한테 그 역할을 합니다.</span>
+    </p>
+    <p class="section-text">
+      기술을 배우실 필요 없습니다.<br>
+      사장님이 하시던 대로 하시면, 뒤에서 슈파가 연결합니다.
+    </p>
+  </section>
+
+  <!-- 4. 시나리오 -->
+  <div class="divider"><hr></div>
+  <section>
+    <p class="section-label">Impact</p>
+    <h2 class="section-title">가게 하나가 달라지는 모습</h2>
+
+    <div class="scenario">
+      <h3>월 매출 2,700만 원 가게라면</h3>
+      <div class="scenario-step">
+        <div class="step-marker">1</div>
+        <p>식재료비 약 1,100만 원 (매출의 40%)</p>
+      </div>
+      <div class="scenario-step">
+        <div class="step-marker">2</div>
+        <p>공동구매로 <span class="highlight">5%만 줄이면</span></p>
+      </div>
+      <div class="scenario-step">
+        <div class="step-marker">3</div>
+        <p>월 55만 원 절감, <span class="highlight">연 660만 원</span></p>
+      </div>
+      <div class="scenario-result">
+        순이익 200만 원 기준, 25% 증가
+      </div>
+    </div>
+
+    <p class="section-text" style="text-align: center;">
+      리뷰 답변에 매일 30분 쓰셨다면,<br>
+      <span class="accent">그 30분을 손님한테 쓰실 수 있습니다.</span>
+    </p>
+  </section>
+
+  <!-- 5. 원칙 -->
+  <div class="divider"><hr></div>
+  <section>
+    <p class="section-label">Principle</p>
+    <h2 class="section-title">슈파가 일하는 방식</h2>
+
+    <div class="principle-list">
+      <div class="principle">
+        <div class="principle-num">01</div>
+        <div>
+          <h4>현장에서 시작합니다</h4>
+          <p>사무실에서 기획하지 않습니다. 사장님 가게에 가서, 듣고, 같이 만듭니다.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">02</div>
+        <div>
+          <h4>먼저 결과를 보여드립니다</h4>
+          <p>"무료"라고 해서 써봤더니 나중에 돈 나가는 서비스가 아닙니다. 결과를 보고 판단하시면 됩니다.</p>
+        </div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">03</div>
+        <div>
+          <h4>같이 만들어갑니다</h4>
+          <p>사장님의 의견이 서비스에 바로 반영됩니다. 쓰시는 분이 만드는 서비스입니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="divider"><hr></div>
+  <section class="cta-section">
+    <p class="section-label">Contact</p>
+    <h2 class="section-title">가게 이야기,<br>편하게 들려주세요</h2>
+    <p class="section-text">
+      거기서부터 시작하겠습니다.
+    </p>
+  </section>
+
+  <!-- 푸터 -->
+  <footer>
+    <p>SUPA — Super Partners</p>
+    <p><a href="https://spacegongzone.com">공존공간</a></p>
+    <div class="source">
+      참고 수치 출처: 외식업 식재료비 비중 40.4%(농림축산식품부, 2024), 외식업 월 영업이익 221만원(식품외식경제, 2024),
+      폐업 원인 중 원재료비 부담 46%(중소기업중앙회, 2025), 공존공간 소상공인 142회 협업·고객 소비액·만족도(공존공간 성과보고, 2023~2025)
+    </div>
+  </footer>
+
+</body>
+</html>
