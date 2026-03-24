@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SUPA — 슈퍼파트너스 | 공존공간</title>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700;900&display=swap" rel="stylesheet">
   <style>
@@ -183,41 +182,21 @@
       margin: 48px 0 0;
     }
     .flow-item {
-      display: grid;
-      grid-template-columns: 48px 1fr;
-      gap: 20px;
-      align-items: start;
-      padding: 28px 0;
+      padding: 20px 0;
       border-bottom: 1px solid #1a1a1a;
     }
     .flow-item:last-child {
       border-bottom: none;
     }
-    .flow-icon {
-      width: 48px;
-      height: 48px;
-      border: 1px solid #222;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #00B8FF;
-      flex-shrink: 0;
-    }
-    .flow-icon i {
-      width: 22px;
-      height: 22px;
-    }
     .flow-main {
-      font-size: 18px;
-      color: #fff;
+      font-size: 17px;
+      color: #ccc;
       line-height: 1.8;
-      font-weight: 700;
     }
     .flow-wit {
       font-size: 14px;
-      color: #888;
-      margin-top: 8px;
+      color: #555;
+      margin-top: 6px;
       line-height: 1.6;
     }
 
@@ -549,31 +528,19 @@
 
     <div class="service-flow">
       <div class="flow-item">
-        <div class="flow-icon"><i data-lucide="shopping-cart"></i></div>
-        <div>
-          <p class="flow-main">식자재를 같이 사서 <span class="accent">단가를 낮춥니다.</span></p>
-        </div>
+        <p class="flow-main">식자재를 같이 사서 <span class="accent">단가를 낮춥니다.</span></p>
       </div>
       <div class="flow-item">
-        <div class="flow-icon"><i data-lucide="file-check"></i></div>
-        <div>
-          <p class="flow-main">거래 내역은 <span class="accent">자동으로 정리됩니다.</span></p>
-          <p class="flow-wit">숫자는 저희가 세겠습니다. 사장님은 손님을 보세요.</p>
-        </div>
+        <p class="flow-main">거래 내역은 <span class="accent">자동으로 정리됩니다.</span></p>
+        <p class="flow-wit">숫자는 저희가 세겠습니다. 사장님은 손님을 보세요.</p>
       </div>
       <div class="flow-item">
-        <div class="flow-icon"><i data-lucide="message-circle"></i></div>
-        <div>
-          <p class="flow-main">손님 리뷰엔 <span class="highlight">사장님 말투 그대로</span> 답변이 달립니다.</p>
-          <p class="flow-wit">사장님이 안 쓴 건데, 본인도 헷갈리실 수 있습니다.</p>
-        </div>
+        <p class="flow-main">손님 리뷰엔 <span class="highlight">사장님 말투 그대로</span> 답변이 달립니다.</p>
+        <p class="flow-wit">사장님이 안 쓴 건데, 본인도 헷갈리실 수 있습니다.</p>
       </div>
       <div class="flow-item">
-        <div class="flow-icon"><i data-lucide="share-2"></i></div>
-        <div>
-          <p class="flow-main">가게 소식은 <span class="accent">알아서 SNS에 올라갑니다.</span></p>
-          <p class="flow-wit">사장님은 '언제 올렸지?' 하실 겁니다.</p>
-        </div>
+        <p class="flow-main">가게 소식은 <span class="accent">알아서 SNS에 올라갑니다.</span></p>
+        <p class="flow-wit">사장님은 '언제 올렸지?' 하실 겁니다.</p>
       </div>
     </div>
     <p class="section-text" style="margin-top: 40px;">
@@ -686,6 +653,5 @@
     </div>
   </footer>
 
-  <script>lucide.createIcons();</script>
 </body>
 </html>
