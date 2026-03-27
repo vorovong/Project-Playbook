@@ -1,0 +1,433 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hh:head xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" xmlns:hp10="http://www.hancom.co.kr/hwpml/2016/paragraph" xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" xmlns:hhs="http://www.hancom.co.kr/hwpml/2011/history" xmlns:hm="http://www.hancom.co.kr/hwpml/2011/master-page" xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf/" xmlns:ooxmlchart="http://www.hancom.co.kr/hwpml/2016/ooxmlchart" xmlns:hwpunitchar="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" version="1.5" secCnt="1">
+  <hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
+  <hh:refList>
+    <!-- ===== FONTS: NanumGothic(id=0), HYHeadLine-Medium(id=1), Gulim(id=2) ===== -->
+    <hh:fontfaces itemCnt="7">
+      <hh:fontface lang="HANGUL" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+      <hh:fontface lang="LATIN" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+      <hh:fontface lang="HANJA" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+      <hh:fontface lang="JAPANESE" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+      <hh:fontface lang="OTHER" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+      <hh:fontface lang="SYMBOL" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+      <hh:fontface lang="USER" fontCnt="3">
+        <hh:font id="0" face="NanumGothic" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="1" face="HYHeadLine-Medium" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+        <hh:font id="2" face="Gulim" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="6" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
+      </hh:fontface>
+    </hh:fontfaces>
+    <!-- ===== BORDER FILLS ===== -->
+    <!-- bf1: none (page border) -->
+    <!-- bf2: none + transparent (reference) -->
+    <!-- bf3: SOLID 0.12mm all sides (basic table border) -->
+    <!-- bf4: SOLID 0.12mm + #1F3864 dark blue background (label cells) -->
+    <!-- bf5: SOLID 0.12mm + white background (content cells) -->
+    <!-- bf6: SOLID 0.12mm + #F2F2F2 light gray (alternating) -->
+    <hh:borderFills itemCnt="6">
+      <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </hh:borderFill>
+      <hh:borderFill id="2" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+        <hc:fillBrush>
+          <hc:winBrush faceColor="none" hatchColor="#999999" alpha="0"/>
+        </hc:fillBrush>
+      </hh:borderFill>
+      <hh:borderFill id="3" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.12 mm" color="#000000"/>
+      </hh:borderFill>
+      <hh:borderFill id="4" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.12 mm" color="#000000"/>
+        <hc:fillBrush>
+          <hc:winBrush faceColor="#1F3864" hatchColor="#999999" alpha="0"/>
+        </hc:fillBrush>
+      </hh:borderFill>
+      <hh:borderFill id="5" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.12 mm" color="#000000"/>
+        <hc:fillBrush>
+          <hc:winBrush faceColor="#FFFFFF" hatchColor="#999999" alpha="0"/>
+        </hc:fillBrush>
+      </hh:borderFill>
+      <hh:borderFill id="6" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.12 mm" color="#000000"/>
+        <hc:fillBrush>
+          <hc:winBrush faceColor="#F2F2F2" hatchColor="#999999" alpha="0"/>
+        </hc:fillBrush>
+      </hh:borderFill>
+    </hh:borderFills>
+    <!-- ===== CHARACTER PROPERTIES ===== -->
+    <!-- charPr 0: 10pt NanumGothic normal (default body) — fontRef=0 -->
+    <!-- charPr 1: 10pt NanumGothic bold (table labels) — fontRef=0 -->
+    <!-- charPr 2: 16pt HYHeadLine-Medium bold (title) — fontRef=1 -->
+    <!-- charPr 3: 9pt NanumGothic normal (small/footnote) — fontRef=0 -->
+    <!-- charPr 4: 10pt NanumGothic bold white text (label on dark bg) — fontRef=0 -->
+    <!-- charPr 5: 9pt Gulim (page number) — fontRef=2 -->
+    <hh:charProperties itemCnt="6">
+      <!-- charPr 0: 10pt NanumGothic normal -->
+      <hh:charPr id="0" height="1000" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:underline type="NONE" shape="SOLID" color="#000000"/>
+        <hh:strikeout shape="NONE" color="#000000"/>
+        <hh:outline type="NONE"/>
+        <hh:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+      <!-- charPr 1: 10pt NanumGothic bold (table labels) -->
+      <hh:charPr id="1" height="1000" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:bold/>
+        <hh:underline type="NONE" shape="SOLID" color="#000000"/>
+        <hh:strikeout shape="NONE" color="#000000"/>
+        <hh:outline type="NONE"/>
+        <hh:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+      <!-- charPr 2: 16pt HYHeadLine-Medium bold (title) -->
+      <hh:charPr id="2" height="1600" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <hh:fontRef hangul="1" latin="1" hanja="1" japanese="1" other="1" symbol="1" user="1"/>
+        <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:bold/>
+        <hh:underline type="NONE" shape="SOLID" color="#000000"/>
+        <hh:strikeout shape="NONE" color="#000000"/>
+        <hh:outline type="NONE"/>
+        <hh:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+      <!-- charPr 3: 9pt NanumGothic normal (small/footnote) -->
+      <hh:charPr id="3" height="900" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:underline type="NONE" shape="SOLID" color="#000000"/>
+        <hh:strikeout shape="NONE" color="#000000"/>
+        <hh:outline type="NONE"/>
+        <hh:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+      <!-- charPr 4: 10pt NanumGothic bold white text (for dark bg labels) -->
+      <hh:charPr id="4" height="1000" textColor="#FFFFFF" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:bold/>
+        <hh:underline type="NONE" shape="SOLID" color="#000000"/>
+        <hh:strikeout shape="NONE" color="#000000"/>
+        <hh:outline type="NONE"/>
+        <hh:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+      <!-- charPr 5: 9pt Gulim (page number) -->
+      <hh:charPr id="5" height="900" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="2">
+        <hh:fontRef hangul="2" latin="2" hanja="2" japanese="2" other="2" symbol="2" user="2"/>
+        <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+        <hh:underline type="NONE" shape="SOLID" color="#000000"/>
+        <hh:strikeout shape="NONE" color="#000000"/>
+        <hh:outline type="NONE"/>
+        <hh:shadow type="NONE" color="#C0C0C0" offsetX="10" offsetY="10"/>
+      </hh:charPr>
+    </hh:charProperties>
+    <hh:tabProperties itemCnt="3">
+      <hh:tabPr id="0" autoTabLeft="0" autoTabRight="0"/>
+      <hh:tabPr id="1" autoTabLeft="1" autoTabRight="0"/>
+      <hh:tabPr id="2" autoTabLeft="0" autoTabRight="1"/>
+    </hh:tabProperties>
+    <hh:numberings itemCnt="1">
+      <hh:numbering id="1" start="0">
+        <hh:paraHead start="1" level="1" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0">^1.</hh:paraHead>
+        <hh:paraHead start="1" level="2" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="0">^2.</hh:paraHead>
+        <hh:paraHead start="1" level="3" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0">^3)</hh:paraHead>
+        <hh:paraHead start="1" level="4" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="0">^4)</hh:paraHead>
+        <hh:paraHead start="1" level="5" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="DIGIT" charPrIDRef="4294967295" checkable="0">(^5)</hh:paraHead>
+        <hh:paraHead start="1" level="6" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="0">(^6)</hh:paraHead>
+        <hh:paraHead start="1" level="7" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="CIRCLED_DIGIT" charPrIDRef="4294967295" checkable="1">^7</hh:paraHead>
+        <hh:paraHead start="1" level="8" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="CIRCLED_HANGUL_SYLLABLE" charPrIDRef="4294967295" checkable="1">^8</hh:paraHead>
+        <hh:paraHead start="1" level="9" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="HANGUL_JAMO" charPrIDRef="4294967295" checkable="0"/>
+        <hh:paraHead start="1" level="10" align="LEFT" useInstWidth="1" autoIndent="1" widthAdjust="0" textOffsetType="PERCENT" textOffset="50" numFormat="ROMAN_SMALL" charPrIDRef="4294967295" checkable="1"/>
+      </hh:numbering>
+    </hh:numberings>
+    <!-- ===== PARAGRAPH PROPERTIES ===== -->
+    <!-- paraPr 0: JUSTIFY, 160% line spacing (default body) -->
+    <!-- paraPr 1: CENTER, 160% line spacing (title) -->
+    <!-- paraPr 2: CENTER, 130% line spacing (table cells center) -->
+    <!-- paraPr 3: JUSTIFY, 130% line spacing (table cells left/justify) -->
+    <!-- paraPr 4: LEFT, 130% line spacing, indent (table value cells) -->
+    <hh:paraProperties itemCnt="5">
+      <!-- paraPr 0: JUSTIFY, 160% -->
+      <hh:paraPr id="0" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <hh:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <hh:heading type="NONE" idRef="0" level="0"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <hh:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <hp:switch>
+          <hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </hp:case>
+          <hp:default>
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </hp:default>
+        </hp:switch>
+        <hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </hh:paraPr>
+      <!-- paraPr 1: CENTER, 160% (title) -->
+      <hh:paraPr id="1" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <hh:align horizontal="CENTER" vertical="BASELINE"/>
+        <hh:heading type="NONE" idRef="0" level="0"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <hh:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <hp:switch>
+          <hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </hp:case>
+          <hp:default>
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>
+          </hp:default>
+        </hp:switch>
+        <hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </hh:paraPr>
+      <!-- paraPr 2: CENTER, 130% (table cells center) -->
+      <hh:paraPr id="2" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <hh:align horizontal="CENTER" vertical="BASELINE"/>
+        <hh:heading type="NONE" idRef="0" level="0"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <hh:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <hp:switch>
+          <hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </hp:case>
+          <hp:default>
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </hp:default>
+        </hp:switch>
+        <hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </hh:paraPr>
+      <!-- paraPr 3: JUSTIFY, 130% (table cells left-justify) -->
+      <hh:paraPr id="3" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <hh:align horizontal="JUSTIFY" vertical="BASELINE"/>
+        <hh:heading type="NONE" idRef="0" level="0"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <hh:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <hp:switch>
+          <hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </hp:case>
+          <hp:default>
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="0" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </hp:default>
+        </hp:switch>
+        <hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </hh:paraPr>
+      <!-- paraPr 4: LEFT, 130%, indent (table value cells with indent) -->
+      <hh:paraPr id="4" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0" textDir="LTR">
+        <hh:align horizontal="LEFT" vertical="BASELINE"/>
+        <hh:heading type="NONE" idRef="0" level="0"/>
+        <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="BREAK_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
+        <hh:autoSpacing eAsianEng="0" eAsianNum="0"/>
+        <hp:switch>
+          <hp:case hp:required-namespace="http://www.hancom.co.kr/hwpml/2016/HwpUnitChar">
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="200" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </hp:case>
+          <hp:default>
+            <hh:margin>
+              <hc:intent value="0" unit="HWPUNIT"/>
+              <hc:left value="400" unit="HWPUNIT"/>
+              <hc:right value="0" unit="HWPUNIT"/>
+              <hc:prev value="0" unit="HWPUNIT"/>
+              <hc:next value="0" unit="HWPUNIT"/>
+            </hh:margin>
+            <hh:lineSpacing type="PERCENT" value="130" unit="HWPUNIT"/>
+          </hp:default>
+        </hp:switch>
+        <hh:border borderFillIDRef="2" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+      </hh:paraPr>
+    </hh:paraProperties>
+    <hh:styles itemCnt="1">
+      <hh:style id="0" type="PARA" name="바탕글" engName="Normal" paraPrIDRef="0" charPrIDRef="0" nextStyleIDRef="0" langID="1042" lockForm="0"/>
+    </hh:styles>
+  </hh:refList>
+  <hh:compatibleDocument targetProgram="HWP201X">
+    <hh:layoutCompatibility/>
+  </hh:compatibleDocument>
+  <hh:docOption>
+    <hh:linkinfo path="" pageInherit="0" footnoteInherit="0"/>
+  </hh:docOption>
+  <hh:metaTag>{"name":""}</hh:metaTag>
+  <hh:trackchageConfig flags="56"/>
+</hh:head>

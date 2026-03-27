@@ -291,6 +291,290 @@ app.get('/api/stats', (req, res) => {
   res.json({ totalProjects, totalPdfs, byType, byStatus });
 });
 
+// ============================================
+// 🏠 임차인 API
+// ============================================
+
+// 임차인 등록
+app.post('/api/tenants', (req, res) => {
+  const { name, location, contact_name, contact_phone, settlement_type,
+          commission_card, commission_cash, monthly_rent,
+          contract_start, contract_end, notes } = req.body;
+
+  if (!name || !location) {
+    return res.status(400).json({ error: '임차인명과 위치는 필수입니다' });
+  }
+
+  const stmt = db.prepare(`
+    INSERT INTO tenants (name, location, contact_name, contact_phone, settlement_type,
+                         commission_card, commission_cash, monthly_rent,
+                         contract_start, contract_end, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const info = stmt.run(
+    name, location, contact_name || null, contact_phone || null,
+    settlement_type || 'commission',
+    commission_card || 0, commission_cash || 0, monthly_rent || 0,
+    contract_start || null, contract_end || null, notes || null
+  );
+
+  res.status(201).json({ message: '임차인 등록 완료', id: info.lastInsertRowid });
+});
+
+// 임차인 목록
+app.get('/api/tenants', (req, res) => {
+  const tenants = db.prepare(`
+    SELECT t.*,
+      (SELECT COALESCE(SUM(remaining), 0) FROM receivables WHERE tenant_id = t.id) as total_receivable
+    FROM tenants t
+    ORDER BY t.location, t.name
+  `).all();
+  res.json(tenants);
+});
+
+// 임차인 상세
+app.get('/api/tenants/:id', (req, res) => {
+  const tenant = db.prepare('SELECT * FROM tenants WHERE id = ?').get(req.params.id);
+  if (!tenant) return res.status(404).json({ error: '임차인을 찾을 수 없습니다' });
+
+  const settlements = db.prepare(
+    'SELECT * FROM settlements WHERE tenant_id = ? ORDER BY period_start DESC LIMIT 12'
+  ).all(req.params.id);
+
+  const rentPayments = db.prepare(
+    'SELECT * FROM rent_payments WHERE tenant_id = ? ORDER BY year DESC, month DESC LIMIT 12'
+  ).all(req.params.id);
+
+  const receivables = db.prepare(
+    'SELECT * FROM receivables WHERE tenant_id = ? ORDER BY created_at DESC'
+  ).all(req.params.id);
+
+  res.json({ ...tenant, settlements, rentPayments, receivables });
+});
+
+// 임차인 수정
+app.put('/api/tenants/:id', (req, res) => {
+  const tenant = db.prepare('SELECT * FROM tenants WHERE id = ?').get(req.params.id);
+  if (!tenant) return res.status(404).json({ error: '임차인을 찾을 수 없습니다' });
+
+  const { name, location, contact_name, contact_phone, settlement_type,
+          commission_card, commission_cash, monthly_rent,
+          contract_start, contract_end, status, notes } = req.body;
+
+  db.prepare(`
+    UPDATE tenants SET
+      name = ?, location = ?, contact_name = ?, contact_phone = ?,
+      settlement_type = ?, commission_card = ?, commission_cash = ?,
+      monthly_rent = ?, contract_start = ?, contract_end = ?,
+      status = ?, notes = ?, updated_at = datetime('now', 'localtime')
+    WHERE id = ?
+  `).run(
+    name || tenant.name, location || tenant.location,
+    contact_name !== undefined ? contact_name : tenant.contact_name,
+    contact_phone !== undefined ? contact_phone : tenant.contact_phone,
+    settlement_type || tenant.settlement_type,
+    commission_card !== undefined ? commission_card : tenant.commission_card,
+    commission_cash !== undefined ? commission_cash : tenant.commission_cash,
+    monthly_rent !== undefined ? monthly_rent : tenant.monthly_rent,
+    contract_start !== undefined ? contract_start : tenant.contract_start,
+    contract_end !== undefined ? contract_end : tenant.contract_end,
+    status || tenant.status,
+    notes !== undefined ? notes : tenant.notes,
+    req.params.id
+  );
+
+  res.json({ message: '수정 완료' });
+});
+
+// 임차인 삭제
+app.delete('/api/tenants/:id', (req, res) => {
+  const tenant = db.prepare('SELECT * FROM tenants WHERE id = ?').get(req.params.id);
+  if (!tenant) return res.status(404).json({ error: '임차인을 찾을 수 없습니다' });
+  db.prepare('DELETE FROM tenants WHERE id = ?').run(req.params.id);
+  res.json({ message: '삭제 완료' });
+});
+
+// ============================================
+// 💰 정산 API
+// ============================================
+
+// 정산 등록
+app.post('/api/settlements', (req, res) => {
+  const { tenant_id, week_label, period_start, period_end,
+          sales_card, sales_cash, expenses, expense_detail, notes } = req.body;
+
+  if (!tenant_id || !period_start || !period_end) {
+    return res.status(400).json({ error: '임차인, 기간은 필수입니다' });
+  }
+
+  const tenant = db.prepare('SELECT * FROM tenants WHERE id = ?').get(tenant_id);
+  if (!tenant) return res.status(404).json({ error: '임차인을 찾을 수 없습니다' });
+
+  const cardAmt = sales_card || 0;
+  const cashAmt = sales_cash || 0;
+  const totalSales = cardAmt + cashAmt;
+  const expAmt = expenses || 0;
+
+  let commissionAmt = 0;
+  if (tenant.settlement_type === 'commission') {
+    commissionAmt = Math.round(cardAmt * (tenant.commission_card / 100))
+                  + Math.round(cashAmt * (tenant.commission_cash / 100));
+  }
+
+  const netAmt = totalSales - commissionAmt - expAmt;
+
+  const stmt = db.prepare(`
+    INSERT INTO settlements (tenant_id, week_label, period_start, period_end,
+                             sales_card, sales_cash, sales_total,
+                             commission_amount, expenses, expense_detail,
+                             net_amount, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const info = stmt.run(
+    tenant_id, week_label || '', period_start, period_end,
+    cardAmt, cashAmt, totalSales,
+    commissionAmt, expAmt, expense_detail || null,
+    netAmt, notes || null
+  );
+
+  res.status(201).json({ message: '정산 등록 완료', id: info.lastInsertRowid, net_amount: netAmt });
+});
+
+// 정산 목록 (임차인별)
+app.get('/api/tenants/:id/settlements', (req, res) => {
+  const { year, month } = req.query;
+  let sql = 'SELECT * FROM settlements WHERE tenant_id = ?';
+  const params = [req.params.id];
+
+  if (year && month) {
+    sql += " AND period_start >= ? AND period_start < ?";
+    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    const nextMonth = parseInt(month) === 12 ? `${parseInt(year)+1}-01-01` : `${year}-${String(parseInt(month)+1).padStart(2, '0')}-01`;
+    params.push(start, nextMonth);
+  }
+
+  sql += ' ORDER BY period_start DESC';
+  res.json(db.prepare(sql).all(...params));
+});
+
+// 정산 수금 처리
+app.put('/api/settlements/:id/pay', (req, res) => {
+  db.prepare(`
+    UPDATE settlements SET is_paid = 1, paid_date = datetime('now', 'localtime') WHERE id = ?
+  `).run(req.params.id);
+  res.json({ message: '수금 처리 완료' });
+});
+
+// ============================================
+// 🏦 월세 수금 API
+// ============================================
+
+// 월세 등록
+app.post('/api/rent-payments', (req, res) => {
+  const { tenant_id, year, month, rent_amount, maintenance_fee, utility_fee, notes } = req.body;
+
+  if (!tenant_id || !year || !month) {
+    return res.status(400).json({ error: '임차인, 연도, 월은 필수입니다' });
+  }
+
+  const rent = rent_amount || 0;
+  const maint = maintenance_fee || 0;
+  const util = utility_fee || 0;
+  const total = rent + maint + util;
+
+  const stmt = db.prepare(`
+    INSERT INTO rent_payments (tenant_id, year, month, rent_amount, maintenance_fee,
+                               utility_fee, total_due, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const info = stmt.run(tenant_id, year, month, rent, maint, util, total, notes || null);
+  res.status(201).json({ message: '월세 등록 완료', id: info.lastInsertRowid });
+});
+
+// 월세 수금 처리
+app.put('/api/rent-payments/:id/pay', (req, res) => {
+  const { paid_amount } = req.body;
+  const payment = db.prepare('SELECT * FROM rent_payments WHERE id = ?').get(req.params.id);
+  if (!payment) return res.status(404).json({ error: '찾을 수 없습니다' });
+
+  const amt = paid_amount || payment.total_due;
+  db.prepare(`
+    UPDATE rent_payments SET paid_amount = ?, is_paid = 1, paid_date = datetime('now', 'localtime')
+    WHERE id = ?
+  `).run(amt, req.params.id);
+  res.json({ message: '수금 처리 완료' });
+});
+
+// 월세 현황 (연도별)
+app.get('/api/rent-payments', (req, res) => {
+  const { year, tenant_id } = req.query;
+  let sql = `
+    SELECT rp.*, t.name as tenant_name, t.location
+    FROM rent_payments rp
+    JOIN tenants t ON rp.tenant_id = t.id
+    WHERE 1=1
+  `;
+  const params = [];
+
+  if (year) { sql += ' AND rp.year = ?'; params.push(year); }
+  if (tenant_id) { sql += ' AND rp.tenant_id = ?'; params.push(tenant_id); }
+
+  sql += ' ORDER BY rp.year DESC, rp.month DESC, t.name';
+  res.json(db.prepare(sql).all(...params));
+});
+
+// ============================================
+// 📊 통합 대시보드 API
+// ============================================
+app.get('/api/dashboard', (req, res) => {
+  const totalTenants = db.prepare("SELECT COUNT(*) as count FROM tenants WHERE status = 'active'").get().count;
+  const totalProjects = db.prepare('SELECT COUNT(*) as count FROM projects').get().count;
+
+  // 이번 달 수금 현황
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const thisMonth = now.getMonth() + 1;
+
+  const rentThisMonth = db.prepare(`
+    SELECT COUNT(*) as total,
+           SUM(CASE WHEN is_paid = 1 THEN 1 ELSE 0 END) as paid,
+           COALESCE(SUM(total_due), 0) as total_due,
+           COALESCE(SUM(paid_amount), 0) as total_paid
+    FROM rent_payments WHERE year = ? AND month = ?
+  `).get(thisYear, thisMonth);
+
+  // 총 미수금
+  const totalReceivable = db.prepare('SELECT COALESCE(SUM(remaining), 0) as total FROM receivables').get().total;
+
+  // 이번 달 정산 합계
+  const monthStart = `${thisYear}-${String(thisMonth).padStart(2, '0')}-01`;
+  const nextMonth = thisMonth === 12 ? `${thisYear+1}-01-01` : `${thisYear}-${String(thisMonth+1).padStart(2, '0')}-01`;
+  const settlementThisMonth = db.prepare(`
+    SELECT COALESCE(SUM(sales_total), 0) as total_sales,
+           COALESCE(SUM(commission_amount), 0) as total_commission,
+           COALESCE(SUM(net_amount), 0) as total_net
+    FROM settlements WHERE period_start >= ? AND period_start < ?
+  `).get(monthStart, nextMonth);
+
+  // 임차인별 요약
+  const tenantSummary = db.prepare(`
+    SELECT t.id, t.name, t.location, t.settlement_type,
+      (SELECT COALESCE(SUM(remaining), 0) FROM receivables WHERE tenant_id = t.id) as receivable,
+      (SELECT COALESCE(SUM(sales_total), 0) FROM settlements
+       WHERE tenant_id = t.id AND period_start >= ? AND period_start < ?) as month_sales
+    FROM tenants t WHERE t.status = 'active'
+    ORDER BY t.location, t.name
+  `).all(monthStart, nextMonth);
+
+  res.json({
+    totalTenants, totalProjects, totalReceivable,
+    rentThisMonth, settlementThisMonth, tenantSummary
+  });
+});
+
 // ── 서버 시작 ──
 app.listen(PORT, () => {
   console.log(`🏢 공존공간 사업관리 도구가 시작되었습니다`);

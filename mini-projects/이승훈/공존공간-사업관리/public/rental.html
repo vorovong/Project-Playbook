@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>공존공간 - 임대관리</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', '맑은 고딕', sans-serif; background: #f5f7fa; color: #333; }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50, #27ae60);
+      color: white; padding: 16px 30px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .header h1 { font-size: 20px; }
+    .header a { color: white; text-decoration: none; font-size: 14px; opacity: 0.8; }
+    .header a:hover { opacity: 1; }
+
+    .nav { display: flex; background: white; border-bottom: 2px solid #e0e0e0; padding: 0 20px; }
+    .nav a {
+      padding: 12px 20px; text-decoration: none; color: #777; font-size: 14px;
+      border-bottom: 3px solid transparent; font-weight: 500;
+    }
+    .nav a:hover { color: #333; }
+    .nav a.active { color: #27ae60; border-bottom-color: #27ae60; font-weight: 600; }
+
+    .content { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+    .dashboard-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+    }
+    .dash-card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .dash-card .label { font-size: 12px; color: #888; margin-bottom: 4px; }
+    .dash-card .value { font-size: 28px; font-weight: 700; color: #2c3e50; }
+    .dash-card .sub { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .dash-card.highlight { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; }
+    .dash-card.highlight .label { color: rgba(255,255,255,0.8); }
+    .dash-card.highlight .value { color: white; }
+    .dash-card.highlight .sub { color: rgba(255,255,255,0.7); }
+    .dash-card.warning { border-left: 4px solid #e74c3c; }
+
+    .card {
+      background: white; border-radius: 12px; padding: 24px;
+      margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .card h2 { font-size: 17px; margin-bottom: 16px; color: #2c3e50; }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background: #f8f9fa; padding: 10px 12px; text-align: left; font-size: 13px; color: #666; border-bottom: 2px solid #e0e0e0; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+    tr:hover { background: #f8f9fa; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
+    }
+    .badge-green { background: #eafaf1; color: #27ae60; }
+    .badge-red { background: #fdedec; color: #e74c3c; }
+    .badge-blue { background: #ebf5fb; color: #2980b9; }
+    .badge-orange { background: #fef5e7; color: #e67e22; }
+    .badge-gray { background: #f2f3f4; color: #7f8c8d; }
+
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px;
+      cursor: pointer; font-weight: 500; transition: all 0.2s;
+    }
+    .btn-primary { background: #27ae60; color: white; }
+    .btn-primary:hover { background: #219a52; }
+    .btn-blue { background: #3498db; color: white; }
+    .btn-blue:hover { background: #2980b9; }
+    .btn-danger { background: #e74c3c; color: white; }
+    .btn-outline { background: white; color: #27ae60; border: 1px solid #27ae60; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-group { display: flex; gap: 8px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 4px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #27ae60; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white; border-radius: 16px; padding: 28px;
+      max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto;
+    }
+    .modal h2 { margin-bottom: 20px; font-size: 18px; }
+
+    .tenant-card {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; background: white; border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 10px; cursor: pointer;
+    }
+    .tenant-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .tenant-card .info h3 { font-size: 15px; margin-bottom: 3px; }
+    .tenant-card .info .meta { font-size: 13px; color: #888; display: flex; gap: 12px; }
+
+    .amount { font-weight: 600; }
+    .amount.positive { color: #27ae60; }
+    .amount.negative { color: #e74c3c; }
+
+    .empty-state { text-align: center; padding: 40px; color: #aaa; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>공존공간 임대관리</h1>
+  <a href="/">사업관리로 이동</a>
+</div>
+
+<div class="nav">
+  <a class="active" data-tab="dashboard" onclick="switchTab('dashboard')">대시보드</a>
+  <a data-tab="tenants" onclick="switchTab('tenants')">임차인</a>
+  <a data-tab="settlement" onclick="switchTab('settlement')">정산</a>
+  <a data-tab="rent" onclick="switchTab('rent')">월세 수금</a>
+</div>
+
+<div class="content">
+
+  <!-- 대시보드 -->
+  <div id="tab-dashboard" class="section active">
+    <div class="dashboard-grid">
+      <div class="dash-card highlight">
+        <div class="label">활성 임차인</div>
+        <div class="value" id="d-tenants">0</div>
+        <div class="sub">현재 계약 중</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">이번 달 매출</div>
+        <div class="value" id="d-sales">0</div>
+        <div class="sub">정산 기준</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">이번 달 수수료</div>
+        <div class="value" id="d-commission">0</div>
+        <div class="sub">공존공간 수익</div>
+      </div>
+      <div class="dash-card warning">
+        <div class="label">총 미수금</div>
+        <div class="value amount negative" id="d-receivable">0</div>
+        <div class="sub">회수 필요</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>임차인별 현황</h2>
+      <table>
+        <thead>
+          <tr><th>임차인</th><th>위치</th><th>이번 달 매출</th><th>미수금</th><th>상태</th></tr>
+        </thead>
+        <tbody id="d-tenant-table"></tbody>
+      </table>
+      <div id="d-empty" class="empty-state" style="display:none;">
+        임차인을 먼저 등록해주세요.
+      </div>
+    </div>
+  </div>
+
+  <!-- 임차인 관리 -->
+  <div id="tab-tenants" class="section">
+    <div class="card">
+      <div class="card-header">
+        <h2>임차인 목록</h2>
+        <button class="btn btn-primary" onclick="openTenantModal()">+ 임차인 등록</button>
+      </div>
+      <div id="tenant-list"></div>
+    </div>
+  </div>
+
+  <!-- 정산 -->
+  <div id="tab-settlement" class="section">
+    <div class="card">
+      <div class="card-header">
+        <h2>주간 정산</h2>
+        <button class="btn btn-primary" onclick="openSettlementModal()">+ 정산 입력</button>
+      </div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>임차인</label>
+          <select id="s-tenant-filter" onchange="loadSettlements()"><option value="">전체</option></select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>임차인</th><th>기간</th><th>카드</th><th>현금</th><th>매출합계</th><th>수수료</th><th>정산액</th><th>수금</th></tr>
+        </thead>
+        <tbody id="settlement-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 월세 수금 -->
+  <div id="tab-rent" class="section">
+    <div class="card">
+      <div class="card-header">
+        <h2>월세 수금 현황</h2>
+        <button class="btn btn-primary" onclick="openRentModal()">+ 월세 등록</button>
+      </div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>연도</label>
+          <select id="r-year" onchange="loadRent()"></select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>임차인</th><th>위치</th><th>월</th><th>월세</th><th>관리비</th><th>공과금</th><th>합계</th><th>수금</th></tr>
+        </thead>
+        <tbody id="rent-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- 임차인 등록 모달 -->
+<div class="modal-overlay" id="tenant-modal">
+  <div class="modal">
+    <h2 id="tenant-modal-title">임차인 등록</h2>
+    <input type="hidden" id="t-edit-id">
+    <div class="form-row">
+      <div class="form-group"><label>임차인명</label><input id="t-name" placeholder="미식가의주방"></div>
+      <div class="form-group"><label>위치</label>
+        <select id="t-location">
+          <option value="지하1층">지하1층</option>
+          <option value="지상1층">지상1층</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>담당자명</label><input id="t-contact-name"></div>
+      <div class="form-group"><label>연락처</label><input id="t-contact-phone" placeholder="010-0000-0000"></div>
+    </div>
+    <div class="form-group">
+      <label>정산 방식</label>
+      <select id="t-settlement-type" onchange="toggleCommission()">
+        <option value="commission">수수료 기반 (매출 x 수수료율)</option>
+        <option value="revenue">매출-지출 정산</option>
+        <option value="fixed">고정 임대료</option>
+      </select>
+    </div>
+    <div id="commission-fields" class="form-row">
+      <div class="form-group"><label>카드 수수료율 (%)</label><input id="t-comm-card" type="number" value="15"></div>
+      <div class="form-group"><label>현금 수수료율 (%)</label><input id="t-comm-cash" type="number" value="13"></div>
+    </div>
+    <div class="form-group"><label>월 고정 임대료 (원)</label><input id="t-rent" type="number" value="0"></div>
+    <div class="form-row">
+      <div class="form-group"><label>계약 시작일</label><input id="t-contract-start" type="date"></div>
+      <div class="form-group"><label>계약 종료일</label><input id="t-contract-end" type="date"></div>
+    </div>
+    <div class="form-group"><label>메모</label><textarea id="t-notes" rows="2"></textarea></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveTenant()">저장</button>
+      <button class="btn btn-outline" onclick="closeModal('tenant-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 정산 입력 모달 -->
+<div class="modal-overlay" id="settlement-modal">
+  <div class="modal">
+    <h2>정산 입력</h2>
+    <div class="form-group">
+      <label>임차인</label>
+      <select id="s-tenant"></select>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>주차</label><input id="s-week" placeholder="3월 1주차"></div>
+      <div class="form-group"><label>시작일</label><input id="s-start" type="date"></div>
+      <div class="form-group"><label>종료일</label><input id="s-end" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>카드 매출 (원)</label><input id="s-card" type="number" value="0"></div>
+      <div class="form-group"><label>현금 매출 (원)</label><input id="s-cash" type="number" value="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>지출 (원)</label><input id="s-expenses" type="number" value="0"></div>
+      <div class="form-group"><label>지출 내역</label><input id="s-expense-detail" placeholder="재료비, 소모품 등"></div>
+    </div>
+    <div class="form-group"><label>메모</label><textarea id="s-notes" rows="2"></textarea></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveSettlement()">저장</button>
+      <button class="btn btn-outline" onclick="closeModal('settlement-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 월세 등록 모달 -->
+<div class="modal-overlay" id="rent-modal">
+  <div class="modal">
+    <h2>월세 등록</h2>
+    <div class="form-group">
+      <label>임차인</label>
+      <select id="r-tenant"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>연도</label><input id="r-new-year" type="number" value="2026"></div>
+      <div class="form-group"><label>월</label><input id="r-new-month" type="number" min="1" max="12" value="3"></div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>월세 (원)</label><input id="r-amount" type="number" value="0"></div>
+      <div class="form-group"><label>관리비 (원)</label><input id="r-maint" type="number" value="0"></div>
+      <div class="form-group"><label>공과금 (원)</label><input id="r-util" type="number" value="0"></div>
+    </div>
+    <div class="form-group"><label>메모</label><textarea id="r-notes" rows="2"></textarea></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="saveRent()">저장</button>
+      <button class="btn btn-outline" onclick="closeModal('rent-modal')">취소</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let tenants = [];
+
+// ── 탭 전환 ──
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector(`.nav a[data-tab="${name}"]`).classList.add('active');
+
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'tenants') loadTenants();
+  if (name === 'settlement') loadSettlements();
+  if (name === 'rent') loadRent();
+}
+
+// ── 숫자 포맷 ──
+function fmt(n) { return (n || 0).toLocaleString(); }
+
+// ── 모달 ──
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// ── 대시보드 ──
+async function loadDashboard() {
+  const res = await fetch(API + '/api/dashboard');
+  const d = await res.json();
+
+  document.getElementById('d-tenants').textContent = d.totalTenants;
+  document.getElementById('d-sales').textContent = fmt(d.settlementThisMonth.total_sales) + '원';
+  document.getElementById('d-commission').textContent = fmt(d.settlementThisMonth.total_commission) + '원';
+  document.getElementById('d-receivable').textContent = fmt(d.totalReceivable) + '원';
+
+  const tbody = document.getElementById('d-tenant-table');
+  if (d.tenantSummary.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('d-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('d-empty').style.display = 'none';
+  tbody.innerHTML = d.tenantSummary.map(t => `
+    <tr>
+      <td><strong>${t.name}</strong></td>
+      <td>${t.location}</td>
+      <td>${fmt(t.month_sales)}원</td>
+      <td class="${t.receivable > 0 ? 'amount negative' : ''}">${fmt(t.receivable)}원</td>
+      <td><span class="badge badge-green">활성</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── 임차인 ──
+async function loadTenants() {
+  const res = await fetch(API + '/api/tenants');
+  tenants = await res.json();
+
+  const list = document.getElementById('tenant-list');
+  if (tenants.length === 0) {
+    list.innerHTML = '<div class="empty-state">등록된 임차인이 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = tenants.map(t => `
+    <div class="tenant-card" onclick="editTenant(${t.id})">
+      <div class="info">
+        <h3>${t.name}</h3>
+        <div class="meta">
+          <span>${t.location}</span>
+          <span>${t.settlement_type === 'commission' ? '수수료 ' + t.commission_card + '/' + t.commission_cash + '%' :
+                  t.settlement_type === 'revenue' ? '매출-지출' : '고정 ' + fmt(t.monthly_rent) + '원'}</span>
+          ${t.total_receivable > 0 ? '<span class="amount negative">미수금 ' + fmt(t.total_receivable) + '원</span>' : ''}
+        </div>
+      </div>
+      <div>
+        <span class="badge ${t.status === 'active' ? 'badge-green' : 'badge-gray'}">${t.status === 'active' ? '활성' : '비활성'}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // 정산/월세 모달의 임차인 셀렉트 업데이트
+  updateTenantSelects();
+}
+
+function updateTenantSelects() {
+  const opts = tenants.map(t => `<option value="${t.id}">${t.name} (${t.location})</option>`).join('');
+  ['s-tenant', 'r-tenant'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+  const filter = document.getElementById('s-tenant-filter');
+  if (filter) filter.innerHTML = '<option value="">전체</option>' + opts;
+}
+
+function openTenantModal(id) {
+  document.getElementById('tenant-modal-title').textContent = id ? '임차인 수정' : '임차인 등록';
+  document.getElementById('t-edit-id').value = '';
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-location').value = '지하1층';
+  document.getElementById('t-contact-name').value = '';
+  document.getElementById('t-contact-phone').value = '';
+  document.getElementById('t-settlement-type').value = 'commission';
+  document.getElementById('t-comm-card').value = '15';
+  document.getElementById('t-comm-cash').value = '13';
+  document.getElementById('t-rent').value = '0';
+  document.getElementById('t-contract-start').value = '';
+  document.getElementById('t-contract-end').value = '';
+  document.getElementById('t-notes').value = '';
+  toggleCommission();
+  document.getElementById('tenant-modal').classList.add('active');
+}
+
+async function editTenant(id) {
+  const res = await fetch(API + '/api/tenants/' + id);
+  const t = await res.json();
+  document.getElementById('tenant-modal-title').textContent = '임차인 수정';
+  document.getElementById('t-edit-id').value = t.id;
+  document.getElementById('t-name').value = t.name;
+  document.getElementById('t-location').value = t.location;
+  document.getElementById('t-contact-name').value = t.contact_name || '';
+  document.getElementById('t-contact-phone').value = t.contact_phone || '';
+  document.getElementById('t-settlement-type').value = t.settlement_type;
+  document.getElementById('t-comm-card').value = t.commission_card;
+  document.getElementById('t-comm-cash').value = t.commission_cash;
+  document.getElementById('t-rent').value = t.monthly_rent;
+  document.getElementById('t-contract-start').value = t.contract_start || '';
+  document.getElementById('t-contract-end').value = t.contract_end || '';
+  document.getElementById('t-notes').value = t.notes || '';
+  toggleCommission();
+  document.getElementById('tenant-modal').classList.add('active');
+}
+
+function toggleCommission() {
+  const type = document.getElementById('t-settlement-type').value;
+  document.getElementById('commission-fields').style.display = type === 'commission' ? 'grid' : 'none';
+}
+
+async function saveTenant() {
+  const id = document.getElementById('t-edit-id').value;
+  const data = {
+    name: document.getElementById('t-name').value,
+    location: document.getElementById('t-location').value,
+    contact_name: document.getElementById('t-contact-name').value,
+    contact_phone: document.getElementById('t-contact-phone').value,
+    settlement_type: document.getElementById('t-settlement-type').value,
+    commission_card: parseFloat(document.getElementById('t-comm-card').value) || 0,
+    commission_cash: parseFloat(document.getElementById('t-comm-cash').value) || 0,
+    monthly_rent: parseInt(document.getElementById('t-rent').value) || 0,
+    contract_start: document.getElementById('t-contract-start').value || null,
+    contract_end: document.getElementById('t-contract-end').value || null,
+    notes: document.getElementById('t-notes').value,
+  };
+
+  const url = id ? API + '/api/tenants/' + id : API + '/api/tenants';
+  const method = id ? 'PUT' : 'POST';
+  await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  closeModal('tenant-modal');
+  loadTenants();
+  loadDashboard();
+}
+
+// ── 정산 ──
+async function loadSettlements() {
+  const tenantId = document.getElementById('s-tenant-filter').value;
+  let url = API + '/api/settlements?dummy=1';
+  if (tenantId) url = API + '/api/tenants/' + tenantId + '/settlements';
+  else {
+    // 전체 목록은 각 임차인의 정산을 합침
+    const res = await fetch(API + '/api/tenants');
+    const ts = await res.json();
+    let all = [];
+    for (const t of ts) {
+      const r = await fetch(API + '/api/tenants/' + t.id + '/settlements');
+      const s = await r.json();
+      all = all.concat(s.map(x => ({ ...x, tenant_name: t.name })));
+    }
+    all.sort((a, b) => b.period_start.localeCompare(a.period_start));
+    renderSettlements(all);
+    return;
+  }
+  const res = await fetch(url);
+  const data = await res.json();
+  const tenant = tenants.find(t => t.id == tenantId);
+  renderSettlements(data.map(x => ({ ...x, tenant_name: tenant ? tenant.name : '' })));
+}
+
+function renderSettlements(data) {
+  const tbody = document.getElementById('settlement-table');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:30px;">정산 기록이 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td>${s.tenant_name || ''}</td>
+      <td>${s.period_start} ~ ${s.period_end}</td>
+      <td>${fmt(s.sales_card)}</td>
+      <td>${fmt(s.sales_cash)}</td>
+      <td><strong>${fmt(s.sales_total)}</strong></td>
+      <td>${fmt(s.commission_amount)}</td>
+      <td class="amount ${s.net_amount >= 0 ? 'positive' : 'negative'}">${fmt(s.net_amount)}</td>
+      <td>
+        ${s.is_paid
+          ? '<span class="badge badge-green">완료</span>'
+          : `<button class="btn btn-sm btn-blue" onclick="paySettlement(${s.id})">수금</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openSettlementModal() {
+  document.getElementById('s-week').value = '';
+  document.getElementById('s-start').value = '';
+  document.getElementById('s-end').value = '';
+  document.getElementById('s-card').value = '0';
+  document.getElementById('s-cash').value = '0';
+  document.getElementById('s-expenses').value = '0';
+  document.getElementById('s-expense-detail').value = '';
+  document.getElementById('s-notes').value = '';
+  document.getElementById('settlement-modal').classList.add('active');
+}
+
+async function saveSettlement() {
+  const data = {
+    tenant_id: parseInt(document.getElementById('s-tenant').value),
+    week_label: document.getElementById('s-week').value,
+    period_start: document.getElementById('s-start').value,
+    period_end: document.getElementById('s-end').value,
+    sales_card: parseInt(document.getElementById('s-card').value) || 0,
+    sales_cash: parseInt(document.getElementById('s-cash').value) || 0,
+    expenses: parseInt(document.getElementById('s-expenses').value) || 0,
+    expense_detail: document.getElementById('s-expense-detail').value,
+    notes: document.getElementById('s-notes').value,
+  };
+  await fetch(API + '/api/settlements', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+  });
+  closeModal('settlement-modal');
+  loadSettlements();
+  loadDashboard();
+}
+
+async function paySettlement(id) {
+  if (!confirm('수금 처리하시겠습니까?')) return;
+  await fetch(API + '/api/settlements/' + id + '/pay', { method: 'PUT' });
+  loadSettlements();
+}
+
+// ── 월세 ──
+function initRentYear() {
+  const sel = document.getElementById('r-year');
+  const year = new Date().getFullYear();
+  for (let y = year; y >= year - 2; y--) {
+    sel.innerHTML += `<option value="${y}">${y}년</option>`;
+  }
+}
+
+async function loadRent() {
+  const year = document.getElementById('r-year').value;
+  const res = await fetch(API + '/api/rent-payments?year=' + year);
+  const data = await res.json();
+
+  const tbody = document.getElementById('rent-table');
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:30px;">월세 기록이 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td>${r.tenant_name}</td>
+      <td>${r.location}</td>
+      <td>${r.month}월</td>
+      <td>${fmt(r.rent_amount)}</td>
+      <td>${fmt(r.maintenance_fee)}</td>
+      <td>${fmt(r.utility_fee)}</td>
+      <td><strong>${fmt(r.total_due)}</strong></td>
+      <td>
+        ${r.is_paid
+          ? '<span class="badge badge-green">완료</span>'
+          : `<button class="btn btn-sm btn-blue" onclick="payRent(${r.id})">수금</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openRentModal() {
+  const now = new Date();
+  document.getElementById('r-new-year').value = now.getFullYear();
+  document.getElementById('r-new-month').value = now.getMonth() + 1;
+  document.getElementById('r-amount').value = '0';
+  document.getElementById('r-maint').value = '0';
+  document.getElementById('r-util').value = '0';
+  document.getElementById('r-notes').value = '';
+  document.getElementById('rent-modal').classList.add('active');
+}
+
+async function saveRent() {
+  const data = {
+    tenant_id: parseInt(document.getElementById('r-tenant').value),
+    year: parseInt(document.getElementById('r-new-year').value),
+    month: parseInt(document.getElementById('r-new-month').value),
+    rent_amount: parseInt(document.getElementById('r-amount').value) || 0,
+    maintenance_fee: parseInt(document.getElementById('r-maint').value) || 0,
+    utility_fee: parseInt(document.getElementById('r-util').value) || 0,
+    notes: document.getElementById('r-notes').value,
+  };
+  await fetch(API + '/api/rent-payments', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+  });
+  closeModal('rent-modal');
+  loadRent();
+  loadDashboard();
+}
+
+async function payRent(id) {
+  if (!confirm('수금 처리하시겠습니까?')) return;
+  await fetch(API + '/api/rent-payments/' + id + '/pay', { method: 'PUT' });
+  loadRent();
+}
+
+// ── 초기화 ──
+initRentYear();
+loadDashboard();
+loadTenants();
+</script>
+</body>
+</html>

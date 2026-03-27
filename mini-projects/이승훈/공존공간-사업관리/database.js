@@ -71,6 +71,98 @@ db.exec(`
   )
 `);
 
+// ============================================
+// 테이블 4: 임차인 (tenants)
+// 각 임차인의 기본 정보와 정산 방식
+// ============================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tenants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    location TEXT NOT NULL,
+    contact_name TEXT,
+    contact_phone TEXT,
+    settlement_type TEXT NOT NULL DEFAULT 'commission',
+    commission_card REAL DEFAULT 0,
+    commission_cash REAL DEFAULT 0,
+    monthly_rent INTEGER DEFAULT 0,
+    contract_start TEXT,
+    contract_end TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+  )
+`);
+
+// ============================================
+// 테이블 5: 주간 정산 (settlements)
+// 임차인별 주간 정산 기록
+// ============================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS settlements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tenant_id INTEGER NOT NULL,
+    week_label TEXT NOT NULL,
+    period_start TEXT NOT NULL,
+    period_end TEXT NOT NULL,
+    sales_card INTEGER DEFAULT 0,
+    sales_cash INTEGER DEFAULT 0,
+    sales_total INTEGER DEFAULT 0,
+    commission_amount INTEGER DEFAULT 0,
+    expenses INTEGER DEFAULT 0,
+    expense_detail TEXT,
+    net_amount INTEGER DEFAULT 0,
+    is_paid INTEGER DEFAULT 0,
+    paid_date TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  )
+`);
+
+// ============================================
+// 테이블 6: 월세 수금 (rent_payments)
+// 월별 월세/관리비 수금 추적
+// ============================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS rent_payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tenant_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    rent_amount INTEGER DEFAULT 0,
+    maintenance_fee INTEGER DEFAULT 0,
+    utility_fee INTEGER DEFAULT 0,
+    total_due INTEGER DEFAULT 0,
+    paid_amount INTEGER DEFAULT 0,
+    is_paid INTEGER DEFAULT 0,
+    paid_date TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  )
+`);
+
+// ============================================
+// 테이블 7: 미수금 (receivables)
+// 임차인별 미수금 추적
+// ============================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS receivables (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tenant_id INTEGER NOT NULL,
+    category TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    remaining INTEGER NOT NULL,
+    weekly_deduction INTEGER DEFAULT 0,
+    description TEXT,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+  )
+`);
+
 console.log('📁 데이터베이스 준비 완료 (gongzon.db)');
 
 module.exports = db;
