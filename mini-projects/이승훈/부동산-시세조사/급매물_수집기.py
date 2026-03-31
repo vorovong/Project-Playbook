@@ -92,32 +92,30 @@ def send_telegram(text):
         pass
 
 
-def notify_buildings(buildings):
-    """신규 매물 텔레그램 알림"""
+def send_telegram_file(filepath, caption=""):
+    """텔레그램으로 파일 전송"""
+    try:
+        with open(filepath, "rb") as f:
+            requests.post(
+                f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendDocument",
+                data={"chat_id": TELEGRAM_CHAT_ID, "caption": caption},
+                files={"document": f},
+                timeout=30,
+            )
+    except Exception:
+        pass
+
+
+def notify_buildings(buildings, excel_path=None):
+    """텔레그램 알림 — 엑셀 파일만 첨부"""
     if not buildings:
         send_telegram("오늘 신규 꼬마빌딩 매물이 없습니다.")
         return
 
-    header = f"🏢 신규 꼬마빌딩 매물 {len(buildings)}건\n"
-    header += f"📅 {datetime.now().strftime('%Y-%m-%d')}\n"
-    header += "─" * 20
-
-    # 매물별 메시지 (텔레그램 메시지 길이 제한 때문에 10건씩 나눔)
-    chunks = [buildings[i:i+10] for i in range(0, len(buildings), 10)]
-
-    for ci, chunk in enumerate(chunks):
-        lines = [header] if ci == 0 else [f"({ci+1}/{len(chunks)})"]
-        for b in chunk:
-            price = b["매매가_억"]
-            line = (
-                f"\n<b>{b['지역_시도']} {b['지역_시군구']}</b>\n"
-                f"  {b['매물명']} | {b['유형']}\n"
-                f"  💰 {price}억 | 📐 {b['면적_평']}평\n"
-                f"  {b['설명'][:40]}\n"
-                f"  <a href=\"{b['링크']}\">네이버부동산 보기</a>"
-            )
-            lines.append(line)
-        send_telegram("\n".join(lines))
+    if excel_path and os.path.exists(excel_path):
+        send_telegram_file(excel_path)
+    else:
+        send_telegram(f"꼬마빌딩 {len(buildings)}건 수집 완료")
 
 # 서울/경기/인천 시도 코드
 TARGET_SIDO = {
@@ -567,7 +565,7 @@ def main():
 
     # 텔레그램 알림
     if "--notify" in sys.argv:
-        notify_buildings(buildings)
+        notify_buildings(buildings, excel_path=filename)
         print("텔레그램 알림 발송 완료")
 
     print(f"\n완료!")
