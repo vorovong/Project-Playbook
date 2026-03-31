@@ -1,0 +1,29 @@
+name: Notion Autofill
+
+on:
+  schedule:
+    - cron: '0 11 * * *'  # UTC 11:00 = KST 20:00
+  workflow_dispatch:  # 수동 실행 버튼
+
+jobs:
+  autofill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: mini-projects/이승훈/공존공간-사업관리
+        run: npm install
+
+      - name: Run autofill
+        working-directory: mini-projects/이승훈/공존공간-사업관리
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_WORKLOG_DB: ${{ secrets.NOTION_WORKLOG_DB }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node notion-autofill.js
