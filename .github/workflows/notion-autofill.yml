@@ -37,4 +37,6 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           NAVER_EMAIL: ${{ secrets.NAVER_EMAIL }}
           NAVER_PASSWORD: ${{ secrets.NAVER_PASSWORD }}
+          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
         run: node utility-autofill.js
