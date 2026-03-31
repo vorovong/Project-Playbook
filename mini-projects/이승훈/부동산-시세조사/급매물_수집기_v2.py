@@ -18,8 +18,12 @@ import time
 import random
 import requests
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+# .env 로드 (스크립트 위치 기준)
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 # ── 설정 ──────────────────────────────────────────────
 
@@ -53,9 +57,9 @@ DATA_DIR = os.path.join(
     "mini-projects", "이승훈", "부동산-시세조사", "data",
 )
 
-# 텔레그램 알림 설정
-TELEGRAM_TOKEN = "8620151069:AAEvOeFJuhNQG74yq2oRC_tew2clD57Fy2g"
-TELEGRAM_CHAT_ID = "8375504457"
+# 텔레그램 알림 설정 (.env에서 로드)
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 
 # ── API 호출 ─────────────────────────────────────────
@@ -194,6 +198,9 @@ def parse_article_pc(article):
     atcl_no = article.get("articleNo", "")
     link = f"https://fin.land.naver.com/articles/{atcl_no}" if atcl_no else ""
 
+    # 평단가 계산 (매매가 ÷ 건물면적)
+    평단가_만원 = round(prc / pyeong) if pyeong > 0 and prc > 0 else 0
+
     return {
         "매물번호": atcl_no,
         "매물명": article.get("articleName", ""),
@@ -204,6 +211,7 @@ def parse_article_pc(article):
         "건물면적_평": pyeong,
         "토지면적_m2": round(land_area, 1),
         "토지면적_평": land_pyeong,
+        "평단가_만원": 평단가_만원,
         "층": article.get("floorInfo", ""),
         "방향": article.get("direction", ""),
         "설명": article.get("articleFeatureDesc", "") or "",
@@ -213,8 +221,25 @@ def parse_article_pc(article):
     }
 
 
+def get_sigungu_list(sido_code, log=print):
+    """시도 코드 → 시군구 목록 조회 (m.land.naver.com API)"""
+    try:
+        resp = SESSION.get(
+            "https://m.land.naver.com/map/getRegionList",
+            params={"cortarNo": sido_code},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        region_list = data.get("result", {}).get("list", [])
+        return [(r["CortarNm"], r["CortarNo"]) for r in region_list]
+    except Exception as e:
+        log(f"  시군구 목록 조회 실패: {e}")
+        return []
+
+
 def collect_all(sido_filter=None, log=print):
-    """서울/경기/인천 전체 수집"""
+    """서울/경기/인천 전체 수집 (시군구 단위로 조회하여 누락 방지)"""
     if sido_filter:
         codes = {k: v for k, v in TARGET_SIDO.items() if k in sido_filter}
     else:
@@ -223,35 +248,43 @@ def collect_all(sido_filter=None, log=print):
     all_buildings = []
 
     for sido_name, sido_code in codes.items():
-        log(f"\n[{sido_name}] 검색 중...")
-        raw = fetch_all_articles_pc(sido_code, log)
+        log(f"\n[{sido_name}] 시군구 목록 조회 중...")
+        sigungu_list = get_sigungu_list(sido_code, log)
         wait()
 
-        count = 0
-        for a in raw:
-            if not is_building_type(a):
-                continue
-            if not is_recent(a, days=RECENT_DAYS):
-                continue
+        if not sigungu_list:
+            log(f"  시군구 목록을 가져오지 못해 시도 단위로 조회합니다.")
+            sigungu_list = [("전체", sido_code)]
 
-            parsed = parse_article_pc(a)
-            if parsed["매매가_만원"] <= 0 or parsed["매매가_만원"] > MAX_PRICE:
-                continue
+        sido_count = 0
+        for sg_name, sg_code in sigungu_list:
+            raw = fetch_all_articles_pc(sg_code, log)
+            wait()
 
-            parsed["지역_시도"] = sido_name
-            parsed["지역_시군구"] = article_area_name(a)
-            all_buildings.append(parsed)
-            count += 1
+            count = 0
+            for a in raw:
+                if not is_building_type(a):
+                    continue
+                if not is_recent(a, days=RECENT_DAYS):
+                    continue
 
-        log(f"  → {sido_name}: {count}건 (전체 {len(raw)}건 중)")
+                parsed = parse_article_pc(a)
+                if parsed["매매가_만원"] <= 0 or parsed["매매가_만원"] > MAX_PRICE:
+                    continue
+
+                parsed["지역_시도"] = sido_name
+                parsed["지역_시군구"] = sg_name
+                all_buildings.append(parsed)
+                count += 1
+
+            if count > 0:
+                log(f"  {sg_name}: {count}건")
+            sido_count += count
+
+        log(f"  → {sido_name} 합계: {sido_count}건")
 
     log(f"\n총 {len(all_buildings)}건 수집 완료")
     return all_buildings
-
-
-def article_area_name(article):
-    """매물에서 시군구 이름 추출"""
-    return article.get("cityName", "") or article.get("divisionName", "") or ""
 
 
 # ── 신규 매물 판별 ────────────────────────────────────
@@ -317,6 +350,7 @@ def create_report(buildings, filename, title="전체"):
     col_headers = [
         "지역", "매물명", "유형", "매매가(억)",
         "건물면적(m2)", "건물면적(평)", "토지면적(m2)", "토지면적(평)",
+        "평단가(만원/평)",
         "층", "설명", "확인일", "중개사", "네이버부동산", "링크(복사용)",
     ]
     style_header(ws, col_headers)
@@ -332,17 +366,18 @@ def create_report(buildings, filename, title="전체"):
         ws.cell(row=i, column=6, value=b["건물면적_평"]).number_format = "#,##0.0"
         ws.cell(row=i, column=7, value=b["토지면적_m2"]).number_format = "#,##0.0"
         ws.cell(row=i, column=8, value=b["토지면적_평"]).number_format = "#,##0.0"
-        ws.cell(row=i, column=9, value=b["층"])
-        ws.cell(row=i, column=10, value=b["설명"])
-        ws.cell(row=i, column=11, value=b["확인일"])
-        ws.cell(row=i, column=12, value=b["중개사"])
+        ws.cell(row=i, column=9, value=b["평단가_만원"]).number_format = "#,##0"
+        ws.cell(row=i, column=10, value=b["층"])
+        ws.cell(row=i, column=11, value=b["설명"])
+        ws.cell(row=i, column=12, value=b["확인일"])
+        ws.cell(row=i, column=13, value=b["중개사"])
 
         url = b.get("링크", "")
         if url:
-            cell = ws.cell(row=i, column=13, value="보기")
+            cell = ws.cell(row=i, column=14, value="보기")
             cell.hyperlink = url
             cell.font = link_font
-            ws.cell(row=i, column=14, value=url)
+            ws.cell(row=i, column=15, value=url)
 
     auto_width(ws)
 
@@ -369,6 +404,10 @@ def create_report(buildings, filename, title="전체"):
         summary.append(("평균 매매가", f"{round(sum(prices)/len(prices)/10000, 1)}억원"))
         summary.append(("최저가", f"{round(min(prices)/10000, 1)}억원"))
         summary.append(("최고가", f"{round(max(prices)/10000, 1)}억원"))
+
+    단가들 = [b["평단가_만원"] for b in buildings if b["평단가_만원"] > 0]
+    if 단가들:
+        summary.append(("평균 평단가", f"{round(sum(단가들)/len(단가들)):,}만원/평"))
 
     for i, (label, value) in enumerate(summary, 2):
         ws_sum.cell(row=i, column=1, value=label)
