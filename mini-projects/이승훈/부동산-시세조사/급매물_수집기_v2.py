@@ -27,7 +27,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 # ── 설정 ──────────────────────────────────────────────
 
-DELAY = 3.0  # API 호출 간 딜레이 (초)
+DELAY = 5.0  # API 호출 간 딜레이 (초)
 
 # 서울/경기/인천 시도 코드
 TARGET_SIDO = {
@@ -77,16 +77,17 @@ SESSION.headers.update({
 
 
 def api_get(url, params, retry=0):
-    """API 호출 (재시도 포함)"""
+    """API 호출 (재시도 포함). 429 시 None 반환으로 호출자에게 알림."""
     try:
         resp = SESSION.get(url, params=params, timeout=15)
         if resp.status_code == 429:
-            if retry < 3:
+            if retry < 2:
                 wait_time = (retry + 1) * 30
                 print(f"  (429 - {wait_time}초 대기 후 재시도...)")
                 time.sleep(wait_time)
                 return api_get(url, params, retry + 1)
-            return {}
+            print("  (429 - 재시도 초과, 스킵)")
+            return None  # None = 429로 스킵됨
         resp.raise_for_status()
         return resp.json()
     except requests.exceptions.JSONDecodeError:
@@ -101,7 +102,7 @@ def api_get(url, params, retry=0):
 
 def wait():
     """랜덤 딜레이"""
-    time.sleep(DELAY + random.uniform(0, 2))
+    time.sleep(DELAY + random.uniform(0, 3))
 
 
 # ── 매물 수집 (PC API) ──────────────────────────────
@@ -118,16 +119,20 @@ def fetch_articles_pc(cortar_no, page=1):
             "page": str(page),
         },
     )
+    if data is None:
+        return None, False  # 429 스킵
     return data.get("articleList", []), data.get("isMoreData", False)
 
 
 def fetch_all_articles_pc(cortar_no, log=print):
-    """한 지역의 전체 매물 수집 (페이징)"""
+    """한 지역의 전체 매물 수집 (페이징). 429 시 None 반환."""
     all_articles = []
     page = 1
 
     while True:
         articles, has_more = fetch_articles_pc(cortar_no, page)
+        if articles is None:
+            return None  # 429 스킵 신호
         if not articles:
             break
         all_articles.extend(articles)
@@ -257,9 +262,16 @@ def collect_all(sido_filter=None, log=print):
             sigungu_list = [("전체", sido_code)]
 
         sido_count = 0
+        skipped = []
         for sg_name, sg_code in sigungu_list:
             raw = fetch_all_articles_pc(sg_code, log)
             wait()
+
+            if raw is None:
+                skipped.append(sg_name)
+                log(f"  {sg_name}: 429 스킵")
+                time.sleep(60)  # 스킵 후 1분 쉬고 다음 시군구
+                continue
 
             count = 0
             for a in raw:
@@ -282,6 +294,8 @@ def collect_all(sido_filter=None, log=print):
             sido_count += count
 
         log(f"  → {sido_name} 합계: {sido_count}건")
+        if skipped:
+            log(f"  ⚠ 스킵된 지역: {', '.join(skipped)}")
 
     log(f"\n총 {len(all_buildings)}건 수집 완료")
     return all_buildings
@@ -308,10 +322,20 @@ def save_current_ids(buildings):
     return current - existing
 
 
+def is_first_run():
+    """collected_ids.json이 없거나 비어있으면 첫 실행"""
+    id_file = os.path.join(DATA_DIR, "collected_ids.json")
+    if not os.path.exists(id_file):
+        return True
+    with open(id_file, "r", encoding="utf-8") as f:
+        ids = json.load(f)
+    return len(ids) == 0
+
+
 def filter_new_buildings(buildings):
     prev_ids = load_previous_ids()
     if not prev_ids:
-        return buildings
+        return []  # 첫 실행: 기준선 수집이므로 신규 없음
     return [b for b in buildings if b["매물번호"] not in prev_ids]
 
 
@@ -491,10 +515,15 @@ def main():
             send_telegram("오늘 신규 꼬마빌딩 매물이 없습니다.")
         return
 
+    first_run = is_first_run()
     new_buildings = filter_new_buildings(buildings)
-    print(f"\n신규 매물: {len(new_buildings)}건 / 전체: {len(buildings)}건")
-
     save_current_ids(buildings)
+
+    if first_run:
+        print(f"\n[기준선 수집] 전체 {len(buildings)}건 등록 완료")
+        print("  다음 실행부터 신규 매물만 따로 분류됩니다.")
+    else:
+        print(f"\n신규 매물: {len(new_buildings)}건 / 전체: {len(buildings)}건")
 
     os.makedirs(DB_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
@@ -504,13 +533,16 @@ def main():
     create_report(buildings, filename, title=region_label)
     print(f"\n전체 리포트 저장: {filename}")
 
-    if new_buildings and len(new_buildings) < len(buildings):
+    if not first_run and new_buildings:
         new_filename = os.path.join(DB_DIR, f"신규매물_{region_label}_{timestamp}.xlsx")
         create_report(new_buildings, new_filename, title=f"{region_label} 신규")
         print(f"신규 리포트 저장: {new_filename}")
 
     if "--notify" in sys.argv:
-        notify_buildings(buildings, excel_path=filename)
+        if first_run:
+            send_telegram(f"[기준선 수집] 꼬마빌딩 {len(buildings)}건 등록 완료\n다음부터 신규 매물 알림이 시작됩니다.")
+        else:
+            notify_buildings(new_buildings, excel_path=filename)
         print("텔레그램 알림 발송 완료")
 
     print("\n완료!")
