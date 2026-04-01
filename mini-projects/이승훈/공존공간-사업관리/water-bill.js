@@ -7,20 +7,9 @@ const puppeteer = require('puppeteer');
 
 const API_KEY = process.env.NOTION_API_KEY;
 const DB_ID = process.env.NOTION_UTILITY_DB;
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TG_CHAT = process.env.TELEGRAM_CHAT_ID;
-
 const WATER_CUSTOMERS = [
   { custid: '수도-공존공간', custno: '2020002531', name: '(주)공존공간', room: '전체' },
 ];
-
-async function sendTelegram(text) {
-  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TG_CHAT, text, parse_mode: 'HTML' })
-  });
-}
 
 async function queryDB(body = {}) {
   const resp = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
@@ -174,14 +163,6 @@ async function main() {
   }
 
   console.log(`\n🎉 ${newCount}건 신규 등록 완료! 합계: ${totalAmount.toLocaleString()}원`);
-
-  let msg = `🚰 <b>수도요금 신규 등록</b> (${newCount}건)\n\n`;
-  for (const b of newBills) {
-    msg += `${b.month} | ${b.usage}㎥ | ${b.amount.toLocaleString()}원\n`;
-  }
-  msg += `\n<b>합계: ${totalAmount.toLocaleString()}원</b>`;
-  await sendTelegram(msg);
-  console.log('📨 텔레그램 알림 전송 완료');
 }
 
 main().catch(console.error);

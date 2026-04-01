@@ -9,17 +9,6 @@ const { simpleParser } = require('mailparser');
 
 const API_KEY = process.env.NOTION_API_KEY;
 const DB_ID = process.env.NOTION_UTILITY_DB;
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TG_CHAT = process.env.TELEGRAM_CHAT_ID;
-
-async function sendTelegram(text) {
-  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TG_CHAT, text, parse_mode: 'HTML' })
-  });
-}
-
 async function queryDB(body = {}) {
   const resp = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
     method: 'POST',
@@ -76,7 +65,7 @@ function parseKepcoEmail(html) {
 
   const custid = link.match(/custid=([0-9-]+)/)?.[1]?.trim();
   const addr2 = link.match(/addr2=([^&]+)/)?.[1]?.trim() || '';
-  const tvcnt = link.match(/tvcnt=\s*(\d+)/)?.[1];
+  const tvcnt = link.match(/tvcnt=\s*([0-9,]+)/)?.[1];
   const chrgamt = link.match(/chrgamt=\s*([0-9,]+)/)?.[1];
   const yy = link.match(/yy=(\d{4})/)?.[1];
   const mm = link.match(/mm=(\d{2})/)?.[1];
@@ -91,7 +80,7 @@ function parseKepcoEmail(html) {
     custid: custid || '',
     room: room || '미확인',
     month: yy && mm ? `${yy}-${mm}` : '',
-    usage: tvcnt ? parseInt(tvcnt) : 0,
+    usage: tvcnt ? parseInt(tvcnt.replace(/,/g, '')) : 0,
     amount: chrgamt ? parseInt(chrgamt.replace(/,/g, '')) : 0,
     dueDate: yy && mm && dd ? `${yy}-${mm}-${dd}` : '',
   };
@@ -225,14 +214,6 @@ async function main() {
   }
 
   console.log(`\n🎉 ${newCount}건 신규 등록 완료! 합계: ${totalAmount.toLocaleString()}원`);
-
-  let msg = `⚡ <b>공과금 신규 등록</b> (${newCount}건)\n\n`;
-  for (const b of newBills) {
-    msg += `${b.room} | ${b.type} | ${b.amount.toLocaleString()}원\n`;
-  }
-  msg += `\n<b>합계: ${totalAmount.toLocaleString()}원</b>`;
-  await sendTelegram(msg);
-  console.log('📨 텔레그램 알림 전송 완료');
 }
 
 main().catch(console.error);
