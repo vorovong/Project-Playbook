@@ -15,6 +15,7 @@ const WEEKLY_DB = '334d0230-3dc0-81e3-9912-fbb6c7eaafcd';     // 주간정산 DB
 const MONTHLY_DB = '334d0230-3dc0-8102-8fca-f92e96e59846';    // 월정산 DB
 
 const RENT = 3_300_000; // 월 임대료 고정
+const WATER_PURIFIER = 15_900; // 정수기 월 고정
 const COMMISSION_RATE = 0.15;
 const VAT_RATE = 0.10;
 
@@ -172,7 +173,7 @@ function tableBlock(rows, colCount) {
 
 async function saveWeeklyToNotion(title, weekNum, data) {
   const { startDate, endDate, cardTotal, commission, commissionVat, commissionTotal,
-    settlementAmount, rent, rentMonth, utilities, misoo, misooNote, balance } = data;
+    settlementAmount, rent, rentMonth, utilities, waterPurifier, misoo, misooNote, balance } = data;
 
   const rows = [
     tableRow(['항목', '금액', '날짜', '비고']),
@@ -191,12 +192,14 @@ async function saveWeeklyToNotion(title, weekNum, data) {
     rows.push(tableRow(['수도세', utilities.water ? `(${fmt(utilities.water)})` : '', '', '']));
     rows.push(tableRow(['가스비', utilities.gas ? `(${fmt(utilities.gas)})` : '', '', '']));
     rows.push(tableRow(['태양광', utilities.solar ? `(${fmt(utilities.solar)})` : '', '', '']));
-    rows.push(tableRow(['공과금 소계', `(${fmt(utilities.total)})`, '', '']));
+    rows.push(tableRow(['정수기', `(${fmt(WATER_PURIFIER)})`, '', '월 고정']));
+    rows.push(tableRow(['공과금 소계', `(${fmt(utilities.total + WATER_PURIFIER)})`, '', '']));
   } else {
     rows.push(tableRow(['전기세', '', '', '']));
     rows.push(tableRow(['수도세', '', '', '']));
     rows.push(tableRow(['가스비', '', '', '']));
     rows.push(tableRow(['태양광', '', '', '']));
+    rows.push(tableRow(['정수기', '', '', '']));
     rows.push(tableRow(['공과금 소계', '-', '', '']));
   }
 
@@ -281,47 +284,54 @@ async function weeklySettlement(startDate, endDate, misoo = 0, misooNote = '') {
   console.log(`수수료 총액: ${fmt(commissionTotal)}원`);
   console.log(`입금금액(정산금액): ${fmt(settlementAmount)}원`);
 
-  // 3. 25일 포함 여부 확인 → 임대료 + 공과금
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  // 3. 주차 판단 → 1주차: 공과금+정수기, 4주차: 임대료
+  const weekDay = parseInt(startDate.slice(8, 10));
+  const weekNum = Math.ceil(weekDay / 7);
   const month = endDate.slice(0, 7);
-  const day25 = new Date(`${month}-25`);
-  const includes25 = day25 >= start && day25 <= end;
 
   let rent = 0;
   let rentMonth = '';
   let utilities = null;
+  let waterPurifier = 0;
 
-  if (includes25) {
-    rent = RENT;
-    rentMonth = month.replace('-', '.').slice(2);
-    console.log(`\n25일 포함 → 임대료 ${fmt(rent)}원 차감`);
+  if (weekNum === 1) {
+    waterPurifier = WATER_PURIFIER;
+    console.log(`\n1주차 → 정수기 ${fmt(waterPurifier)}원 차감`);
 
-    utilities = await calcUtilities(month);
+    // 공과금은 전월 기준 (4월 1주차 → 3월 공과금)
+    const [y, m] = month.split('-').map(Number);
+    const prevDate = new Date(y, m - 2, 1);
+    const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    console.log(`공과금 조회: ${prevMonth} (전월)`);
+
+    utilities = await calcUtilities(prevMonth);
     console.log(`공과금: 전기 ${fmt(utilities.elec)} / 수도 ${fmt(utilities.water)} / 가스 ${fmt(utilities.gas)} / 태양광 ${fmt(utilities.solar)}`);
     console.log(`공과금 소계: ${fmt(utilities.total)}원`);
+  }
+
+  if (weekNum === 4) {
+    rent = RENT;
+    rentMonth = month.replace('-', '.').slice(2);
+    console.log(`\n4주차 → 임대료 ${fmt(rent)}원 차감`);
   }
 
   // 4. 잔금 계산
   let balance = settlementAmount;
   if (rent > 0) balance -= rent;
   if (utilities) balance -= utilities.total;
+  if (waterPurifier > 0) balance -= waterPurifier;
   if (misoo > 0) balance -= misoo;
 
   console.log(`\n미수 차감: ${misoo > 0 ? fmt(misoo) + '원' : '없음'}`);
   console.log(`잔금 (이체예정액): ${fmt(balance)}원`);
 
-  // 5. 주차 계산
-  const weekDay = parseInt(startDate.slice(8, 10));
-  const weekNum = Math.ceil(weekDay / 7);
-
-  // 6. 노션 저장
+  // 5. 노션 저장
   const title = `미식가 ${month.slice(2).replace('-', '.')}월 ${weekNum}주차 정산`;
   console.log(`\n노션 저장 중...`);
 
   const result = await saveWeeklyToNotion(title, weekNum, {
     startDate, endDate, cardTotal, commission, commissionVat, commissionTotal,
-    settlementAmount, rent, rentMonth, utilities, misoo, misooNote, balance,
+    settlementAmount, rent, rentMonth, utilities, waterPurifier, misoo, misooNote, balance,
   });
 
   if (result.id) {

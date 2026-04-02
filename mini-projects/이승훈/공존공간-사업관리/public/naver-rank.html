@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네이버 플레이스 순위 검색</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 24px; margin-bottom: 20px; }
+  h2 { font-size: 18px; margin: 20px 0 10px; color: #555; }
+
+  .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+
+  input, select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+  input:focus { outline: none; border-color: #4CAF50; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .input-row input { flex: 1; }
+
+  button { padding: 8px 16px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; transition: 0.2s; }
+  .btn-primary { background: #4CAF50; color: #fff; }
+  .btn-primary:hover { background: #43A047; }
+  .btn-danger { background: #ef5350; color: #fff; }
+  .btn-danger:hover { background: #e53935; }
+  .btn-secondary { background: #e0e0e0; color: #333; }
+  .btn-secondary:hover { background: #d0d0d0; }
+  .btn-search { background: #1976D2; color: #fff; font-size: 16px; padding: 12px 24px; }
+  .btn-search:hover { background: #1565C0; }
+  .btn-search:disabled { background: #90CAF9; cursor: not-allowed; }
+
+  .tag { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 16px; font-size: 13px; margin: 3px; cursor: default; }
+  .tag .remove { cursor: pointer; margin-left: 4px; color: #999; }
+  .tag .remove:hover { color: #e53935; }
+  .tag.auto { background: #e3f2fd; color: #1565C0; }
+
+  .biz-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+  .biz-item:last-child { border-bottom: none; }
+  .biz-name { font-weight: 600; font-size: 16px; }
+  .biz-info { font-size: 13px; color: #888; }
+
+  .progress-bar { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin: 10px 0; }
+  .progress-fill { height: 100%; background: #4CAF50; border-radius: 3px; transition: width 0.3s; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
+  th { background: #fafafa; font-weight: 600; color: #555; }
+  .rank-cell { font-weight: 700; }
+  .rank-found { color: #4CAF50; }
+  .rank-notfound { color: #999; }
+
+  .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .status.searching { background: #fff3e0; color: #e65100; }
+  .status.done { background: #e8f5e9; color: #2e7d32; }
+
+  #searchLog { max-height: 400px; overflow-y: auto; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>네이버 플레이스 순위 검색</h1>
+
+  <!-- 업체 추가 -->
+  <div class="card">
+    <h2>업체 등록</h2>
+    <div class="input-row">
+      <input type="text" id="newBizName" placeholder="업체명 입력 (예: 미식가의주방)">
+      <button class="btn-primary" onclick="detectBusiness()">자동 감지</button>
+      <button class="btn-secondary" onclick="addBusinessManual()">수동 등록</button>
+    </div>
+    <div id="detectResult" class="hidden" style="padding:8px; background:#f9f9f9; border-radius:8px; font-size:14px;"></div>
+  </div>
+
+  <!-- 등록된 업체 목록 -->
+  <div class="card">
+    <h2>등록된 업체</h2>
+    <div id="bizList"></div>
+  </div>
+
+  <!-- 선택된 업체 키워드 관리 -->
+  <div id="keywordSection" class="card hidden">
+    <div class="card-header">
+      <h2 id="selectedBizTitle">키워드 관리</h2>
+      <div>
+        <button class="btn-secondary" onclick="autoGenKeywords()">키워드 자동 생성</button>
+        <button class="btn-search" id="searchBtn" onclick="startSearch()">검색 시작</button>
+      </div>
+    </div>
+
+    <!-- 키워드 추가 -->
+    <div class="input-row">
+      <input type="text" id="newKeyword" placeholder="키워드 입력 (쉼표로 여러 개)" onkeydown="if(event.key==='Enter')addKeywords()">
+      <button class="btn-primary" onclick="addKeywords()">추가</button>
+    </div>
+
+    <!-- 자동 생성 제안 -->
+    <div id="autoSuggestions" class="hidden" style="margin-bottom:12px;">
+      <div style="font-size:13px; color:#666; margin-bottom:6px;">자동 생성된 키워드 (<span id="autoCount">0</span>개) — 클릭하면 추가</div>
+      <div id="autoTags"></div>
+      <button class="btn-secondary" style="margin-top:8px;" onclick="addAllSuggestions()">전체 추가</button>
+    </div>
+
+    <!-- 등록된 키워드 -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <div style="font-size:13px; color:#666;">등록된 키워드 (<span id="kwCount">0</span>개)</div>
+      <button class="btn-danger" style="font-size:12px; padding:4px 10px;" onclick="removeAllKeywords()">모두 삭제</button>
+    </div>
+    <div id="keywordTags"></div>
+  </div>
+
+  <!-- 검색 결과 -->
+  <div id="resultSection" class="card hidden">
+    <div class="card-header">
+      <h2>검색 결과</h2>
+      <span id="searchStatus" class="status searching">검색 중...</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div style="font-size:13px; color:#888; margin-bottom:12px;" id="progressText">0 / 0</div>
+    <div id="searchLog">
+      <table>
+        <thead><tr><th>#</th><th>키워드</th><th>순위</th><th>총검색량</th></tr></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 요약 -->
+    <div id="summary" class="hidden" style="margin-top:16px; padding:12px; background:#f0f7f0; border-radius:8px;">
+      <div style="font-weight:600; margin-bottom:8px;">순위 잡힌 키워드</div>
+      <div id="summaryList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedBiz = null;
+let suggestedKeywords = [];
+
+async function loadConfig() {
+  const resp = await fetch('/api/naver-rank/config');
+  const config = await resp.json();
+  renderBizList(config.businesses);
+}
+
+function renderBizList(businesses) {
+  const el = document.getElementById('bizList');
+  if (!businesses.length) {
+    el.innerHTML = '<div style="color:#999; padding:10px;">등록된 업체가 없습니다</div>';
+    return;
+  }
+  el.innerHTML = businesses.map(b => `
+    <div class="biz-item">
+      <div>
+        <div class="biz-name">${b.name}</div>
+        <div class="biz-info">${b.location || '위치 미설정'} · ${b.category || '카테고리 미설정'} · 키워드 ${b.keywords.length}개</div>
+      </div>
+      <div>
+        <button class="btn-primary" onclick="selectBiz('${b.name}')">관리</button>
+        <button class="btn-danger" onclick="deleteBiz('${b.name}')">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function detectBusiness() {
+  const name = document.getElementById('newBizName').value.trim();
+  if (!name) return alert('업체명을 입력하세요');
+
+  const el = document.getElementById('detectResult');
+  el.classList.remove('hidden');
+  el.textContent = '네이버에서 검색 중...';
+
+  const resp = await fetch('/api/naver-rank/detect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  const data = await resp.json();
+
+  if (data.found) {
+    el.innerHTML = `<b>${name}</b> — ${data.location} · ${data.category || '카테고리 미감지'}<br>
+      <button class="btn-primary" style="margin-top:8px;" onclick="addBusinessAuto('${name}','${data.location}','${data.category}')">이 정보로 등록</button>`;
+  } else {
+    el.innerHTML = `"${name}" 위치 감지 실패. <button class="btn-secondary" onclick="addBusinessManual()">수동 등록</button>`;
+  }
+}
+
+async function addBusinessAuto(name, location, category) {
+  await fetch('/api/naver-rank/business', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, location, category, keywords: [] }),
+  });
+  document.getElementById('newBizName').value = '';
+  document.getElementById('detectResult').classList.add('hidden');
+  loadConfig();
+  selectBiz(name);
+}
+
+async function addBusinessManual() {
+  const name = document.getElementById('newBizName').value.trim();
+  if (!name) return alert('업체명을 입력하세요');
+
+  const location = prompt('위치 (예: 수원 팔달구 장안동)') || '';
+  const category = prompt('카테고리 (예: 양식, 한식, 카페)') || '';
+
+  await fetch('/api/naver-rank/business', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, location, category, keywords: [] }),
+  });
+  document.getElementById('newBizName').value = '';
+  loadConfig();
+  selectBiz(name);
+}
+
+async function deleteBiz(name) {
+  if (!confirm(`"${name}" 업체를 삭제할까요?`)) return;
+  await fetch('/api/naver-rank/business/' + encodeURIComponent(name), { method: 'DELETE' });
+  if (selectedBiz === name) {
+    selectedBiz = null;
+    document.getElementById('keywordSection').classList.add('hidden');
+  }
+  loadConfig();
+}
+
+async function selectBiz(name) {
+  selectedBiz = name;
+  document.getElementById('keywordSection').classList.remove('hidden');
+  document.getElementById('selectedBizTitle').textContent = `${name} — 키워드 관리`;
+  renderKeywords();
+}
+
+async function renderKeywords() {
+  const resp = await fetch('/api/naver-rank/config');
+  const config = await resp.json();
+  const biz = config.businesses.find(b => b.name === selectedBiz);
+  if (!biz) return;
+
+  document.getElementById('kwCount').textContent = biz.keywords.length;
+  document.getElementById('keywordTags').innerHTML = biz.keywords.map(k =>
+    `<span class="tag">${k}<span class="remove" onclick="removeKeyword('${k}')">&times;</span></span>`
+  ).join('');
+}
+
+async function addKeywords() {
+  const input = document.getElementById('newKeyword');
+  const keywords = input.value.split(',').map(k => k.trim()).filter(Boolean);
+  if (!keywords.length) return;
+
+  await fetch(`/api/naver-rank/business/${encodeURIComponent(selectedBiz)}/keywords`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keywords }),
+  });
+  input.value = '';
+  renderKeywords();
+  loadConfig();
+}
+
+async function removeKeyword(kw) {
+  await fetch(`/api/naver-rank/business/${encodeURIComponent(selectedBiz)}/keywords`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keywords: [kw] }),
+  });
+  renderKeywords();
+  loadConfig();
+}
+
+async function removeAllKeywords() {
+  if (!confirm('등록된 키워드를 전부 삭제할까요?')) return;
+  const resp = await fetch('/api/naver-rank/config');
+  const config = await resp.json();
+  const biz = config.businesses.find(b => b.name === selectedBiz);
+  if (!biz) return;
+  await fetch(`/api/naver-rank/business/${encodeURIComponent(selectedBiz)}/keywords`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keywords: biz.keywords }),
+  });
+  renderKeywords();
+  loadConfig();
+}
+
+async function autoGenKeywords() {
+  const resp = await fetch(`/api/naver-rank/business/${encodeURIComponent(selectedBiz)}/auto-keywords`, {
+    method: 'POST',
+  });
+  const data = await resp.json();
+  suggestedKeywords = data.generated;
+
+  const el = document.getElementById('autoSuggestions');
+  el.classList.remove('hidden');
+  document.getElementById('autoCount').textContent = data.count;
+  document.getElementById('autoTags').innerHTML = suggestedKeywords.map(k =>
+    `<span class="tag auto" style="cursor:pointer;" onclick="addSingleSuggestion(this, '${k}')">${k}</span>`
+  ).join('');
+}
+
+async function addSingleSuggestion(el, kw) {
+  await fetch(`/api/naver-rank/business/${encodeURIComponent(selectedBiz)}/keywords`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keywords: [kw] }),
+  });
+  el.remove();
+  suggestedKeywords = suggestedKeywords.filter(k => k !== kw);
+  document.getElementById('autoCount').textContent = suggestedKeywords.length;
+  renderKeywords();
+  loadConfig();
+}
+
+async function addAllSuggestions() {
+  if (!suggestedKeywords.length) return;
+  await fetch(`/api/naver-rank/business/${encodeURIComponent(selectedBiz)}/keywords`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keywords: suggestedKeywords }),
+  });
+  suggestedKeywords = [];
+  document.getElementById('autoSuggestions').classList.add('hidden');
+  renderKeywords();
+  loadConfig();
+}
+
+function startSearch() {
+  if (!selectedBiz) return;
+
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+  btn.textContent = '검색 중...';
+
+  const section = document.getElementById('resultSection');
+  section.classList.remove('hidden');
+  document.getElementById('searchStatus').className = 'status searching';
+  document.getElementById('searchStatus').textContent = '검색 중...';
+  document.getElementById('resultBody').innerHTML = '';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('summary').classList.add('hidden');
+
+  const evtSource = new EventSource(`/api/naver-rank/search?business=${encodeURIComponent(selectedBiz)}`);
+
+  evtSource.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+
+    if (data.done) {
+      evtSource.close();
+      btn.disabled = false;
+      btn.textContent = '검색 시작';
+      document.getElementById('searchStatus').className = 'status done';
+      document.getElementById('searchStatus').textContent = '완료';
+      document.getElementById('progressFill').style.width = '100%';
+
+      // 요약
+      if (data.ranked.length > 0) {
+        const summaryEl = document.getElementById('summary');
+        summaryEl.classList.remove('hidden');
+        document.getElementById('summaryList').innerHTML = data.ranked.map(r =>
+          `<div style="padding:4px 0;"><b>${r.rank}위</b> — ${r.keyword}</div>`
+        ).join('');
+      }
+      return;
+    }
+
+    const tbody = document.getElementById('resultBody');
+    const rankDisplay = data.rank > 0
+      ? `<span class="rank-cell rank-found">${data.rank}위</span>`
+      : `<span class="rank-cell rank-notfound">순위권 밖</span>`;
+    const volDisplay = data.searchVolume ? data.searchVolume.toLocaleString() : '-';
+
+    tbody.innerHTML += `<tr>
+      <td>${data.index + 1}</td>
+      <td>${data.keyword}</td>
+      <td>${rankDisplay}</td>
+      <td>${volDisplay}</td>
+    </tr>`;
+
+    // 자동 스크롤
+    const log = document.getElementById('searchLog');
+    log.scrollTop = log.scrollHeight;
+
+    // 진행률
+    const config = JSON.parse(sessionStorage.getItem('kwTotal') || '50');
+    const pct = Math.round(((data.index + 1) / config) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${data.index + 1} / ${config}`;
+  };
+
+  // 키워드 수 저장 (진행률 계산용)
+  fetch('/api/naver-rank/config').then(r => r.json()).then(config => {
+    const biz = config.businesses.find(b => b.name === selectedBiz);
+    if (biz) sessionStorage.setItem('kwTotal', biz.keywords.length);
+  });
+}
+
+// 초기 로드
+loadConfig();
+</script>
+</body>
+</html>

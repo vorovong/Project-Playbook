@@ -575,6 +575,322 @@ app.get('/api/dashboard', (req, res) => {
   });
 });
 
+// ============================================
+// 🔍 네이버 플레이스 순위 API
+// ============================================
+
+const configPath = path.join(__dirname, 'naver-rank-config.json');
+
+function loadRankConfig() {
+  return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+}
+
+function saveRankConfig(config) {
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+}
+
+// 설정 조회
+app.get('/api/naver-rank/config', (req, res) => {
+  res.json(loadRankConfig());
+});
+
+// 업체 추가
+app.post('/api/naver-rank/business', (req, res) => {
+  const { name, location, category, keywords } = req.body;
+  if (!name) return res.status(400).json({ error: '업체명은 필수입니다' });
+
+  const config = loadRankConfig();
+  const exists = config.businesses.find(b => b.name === name);
+  if (exists) return res.status(409).json({ error: '이미 등록된 업체입니다' });
+
+  config.businesses.push({
+    name,
+    location: location || '',
+    category: category || '',
+    keywords: keywords || [],
+  });
+  saveRankConfig(config);
+  res.status(201).json({ message: '업체 추가 완료' });
+});
+
+// 업체 삭제
+app.delete('/api/naver-rank/business/:name', (req, res) => {
+  const config = loadRankConfig();
+  config.businesses = config.businesses.filter(b => b.name !== req.params.name);
+  saveRankConfig(config);
+  res.json({ message: '삭제 완료' });
+});
+
+// 키워드 추가
+app.post('/api/naver-rank/business/:name/keywords', (req, res) => {
+  const { keywords } = req.body; // string[]
+  if (!keywords || !keywords.length) return res.status(400).json({ error: '키워드를 입력하세요' });
+
+  const config = loadRankConfig();
+  const biz = config.businesses.find(b => b.name === req.params.name);
+  if (!biz) return res.status(404).json({ error: '업체를 찾을 수 없습니다' });
+
+  for (const kw of keywords) {
+    if (!biz.keywords.includes(kw)) biz.keywords.push(kw);
+  }
+  saveRankConfig(config);
+  res.json({ message: `${keywords.length}개 키워드 추가`, total: biz.keywords.length });
+});
+
+// 키워드 삭제
+app.delete('/api/naver-rank/business/:name/keywords', (req, res) => {
+  const { keywords } = req.body;
+  const config = loadRankConfig();
+  const biz = config.businesses.find(b => b.name === req.params.name);
+  if (!biz) return res.status(404).json({ error: '업체를 찾을 수 없습니다' });
+
+  biz.keywords = biz.keywords.filter(k => !keywords.includes(k));
+  saveRankConfig(config);
+  res.json({ message: '삭제 완료', total: biz.keywords.length });
+});
+
+// 키워드 자동 생성
+app.post('/api/naver-rank/business/:name/auto-keywords', (req, res) => {
+  const config = loadRankConfig();
+  const biz = config.businesses.find(b => b.name === req.params.name);
+  if (!biz) return res.status(404).json({ error: '업체를 찾을 수 없습니다' });
+
+  const loc = biz.location || '';
+  const cat = biz.category || '';
+
+  // 주소에서 지역명 추출
+  const parts = loc.replace(/\s+/g, ' ').split(' ');
+  const areas = [];
+  for (const p of parts) {
+    const clean = p.replace(/(시|구|동|읍|면|리)$/, '');
+    if (clean.length >= 1) areas.push(p.replace(/(시|구)$/, ''));
+  }
+  // 역 이름 추가 (동명 + 역)
+  const dong = parts.find(p => p.endsWith('동'));
+  const gu = parts.find(p => p.endsWith('구'));
+  const city = parts.find(p => p.endsWith('시') || p.length <= 3);
+
+  const bases = [...new Set([city, gu?.replace('구', ''), dong?.replace('동', ''), ...areas].filter(Boolean))];
+
+  // 카테고리별 메뉴 키워드
+  const menuMap = {
+    '양식': ['파스타', '스테이크', '리조또', '브런치', '오므라이스'],
+    '한식': ['한정식', '백반', '된장찌개', '비빔밥', '국밥'],
+    '일식': ['초밥', '라멘', '돈카츠', '사시미', '우동'],
+    '중식': ['짜장면', '짬뽕', '탕수육', '마라탕', '양꼬치'],
+    '카페': ['카페', '커피', '디저트', '브런치', '케이크'],
+    '퓨전': ['퓨전', '다이닝', '레스토랑', '비스트로'],
+  };
+  const menus = menuMap[cat] || ['맛집'];
+  const situations = ['맛집', '데이트', '점심', '저녁', '모임', '회식', '레스토랑'];
+
+  const generated = new Set();
+  for (const base of bases) {
+    for (const s of situations) generated.add(base + s);
+    for (const m of menus) generated.add(base + m);
+    generated.add(base + '맛집');
+  }
+  // 역 근처 키워드
+  if (city) {
+    generated.add(city + '역맛집');
+    generated.add(city + '역' + (cat || '맛집'));
+    for (const m of menus) generated.add(city + '역' + m);
+    for (const s of situations) generated.add(city + '역' + s);
+  }
+
+  const newKeywords = [...generated].filter(k => !biz.keywords.includes(k));
+  res.json({ generated: newKeywords, count: newKeywords.length });
+});
+
+// 검색 실행 (SSE 스트리밍)
+app.get('/api/naver-rank/search', async (req, res) => {
+  const { business } = req.query;
+  const config = loadRankConfig();
+  const biz = config.businesses.find(b => b.name === business);
+  if (!biz) return res.status(404).json({ error: '업체를 찾을 수 없습니다' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const puppeteer = require('puppeteer');
+  const browser = await puppeteer.launch({ headless: 'new' });
+  const page = await browser.newPage();
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+  const today = new Date().toLocaleDateString('sv-SE');
+  const results = [];
+
+  // totalCount 캡처용 리스너
+  let searchVolume = 0;
+  page.on('response', async (resp) => {
+    const url = resp.url();
+    if (url.includes('allSearch') && url.includes('query')) {
+      try {
+        const json = await resp.json();
+        if (json?.result?.place?.totalCount != null) {
+          searchVolume = json.result.place.totalCount;
+        }
+      } catch {}
+    }
+  });
+
+  for (let i = 0; i < biz.keywords.length; i++) {
+    const kw = biz.keywords[i];
+    let rank = -1;
+    let total = 0;
+    searchVolume = 0;
+
+    try {
+      await page.goto('https://map.naver.com/p/search/' + encodeURIComponent(kw), {
+        waitUntil: 'networkidle2', timeout: 20000,
+      });
+
+      let frame;
+      try {
+        await page.waitForSelector('iframe#searchIframe', { timeout: 8000 });
+        frame = await (await page.$('iframe#searchIframe')).contentFrame();
+        await new Promise(r => setTimeout(r, 3500));
+      } catch { frame = null; }
+
+      if (frame) {
+        const cls = await frame.evaluate(() => {
+          const li = document.querySelector('li');
+          if (!li) return null;
+          const a = li.querySelector('a');
+          if (!a) return null;
+          const span = a.querySelector('span');
+          return span ? span.className.split(' ')[0] : null;
+        });
+
+        if (cls) {
+          for (let pg = 1; pg <= 5; pg++) {
+            if (pg > 1) {
+              const prevFirst = await frame.evaluate((c) => {
+                const s = document.querySelector('span.' + c);
+                return s ? s.textContent.trim() : '';
+              }, cls);
+
+              const clicked = await frame.evaluate((pn) => {
+                for (const b of document.querySelectorAll('a, button')) {
+                  if (b.textContent.trim() === String(pn)) { b.click(); return true; }
+                }
+                return false;
+              }, pg);
+              if (!clicked) break;
+
+              for (let w = 0; w < 12; w++) {
+                await new Promise(r => setTimeout(r, 400));
+                const curr = await frame.evaluate((c) => {
+                  const s = document.querySelector('span.' + c);
+                  return s ? s.textContent.trim() : '';
+                }, cls);
+                if (curr && curr !== prevFirst) break;
+              }
+            }
+
+            const names = await frame.evaluate((c) => {
+              return Array.from(document.querySelectorAll('span.' + c)).map(e => e.textContent.trim());
+            }, cls);
+
+            let found = false;
+            for (const name of names) {
+              total++;
+              if (name.includes(biz.name)) { rank = total; found = true; break; }
+            }
+            if (found) break;
+          }
+        }
+      }
+    } catch {}
+
+    results.push({ keyword: kw, rank, total, searchVolume });
+    res.write(`data: ${JSON.stringify({ index: i, keyword: kw, rank, searchVolume, done: false })}\n\n`);
+
+    // 노션 저장
+    try {
+      const NOTION_API_KEY = process.env.NOTION_API_KEY;
+      const RANK_DB = process.env.NOTION_RANK_DB || '336d0230-3dc0-81c9-a361-c3d6e4c9130b';
+      await fetch('https://api.notion.com/v1/pages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_API_KEY}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          parent: { database_id: RANK_DB },
+          properties: {
+            '날짜': { title: [{ text: { content: today } }] },
+            '키워드': { rich_text: [{ text: { content: kw } }] },
+            '순위': { number: rank > 0 ? rank : null },
+            '업체명': { rich_text: [{ text: { content: biz.name } }] },
+            '총검색량': { number: searchVolume },
+          },
+        }),
+      });
+    } catch {}
+
+    if (i < biz.keywords.length - 1) {
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
+  await browser.close();
+
+  const ranked = results.filter(r => r.rank > 0).sort((a, b) => a.rank - b.rank);
+  res.write(`data: ${JSON.stringify({ done: true, results, ranked })}\n\n`);
+  res.end();
+});
+
+// 업체 정보 네이버에서 자동 감지
+app.post('/api/naver-rank/detect', async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: '업체명을 입력하세요' });
+
+  const puppeteer = require('puppeteer');
+  const browser = await puppeteer.launch({ headless: 'new' });
+  const page = await browser.newPage();
+
+  try {
+    await page.goto('https://map.naver.com/p/search/' + encodeURIComponent(name), {
+      waitUntil: 'networkidle2', timeout: 20000,
+    });
+    await page.waitForSelector('iframe#searchIframe', { timeout: 10000 });
+    const frame = await (await page.$('iframe#searchIframe')).contentFrame();
+    await new Promise(r => setTimeout(r, 4000));
+
+    const info = await frame.evaluate(() => {
+      const text = document.body.innerText;
+      return text.slice(0, 3000);
+    });
+
+    // 주소 추출 (시/구/동 패턴)
+    const addrMatch = info.match(/([\uAC00-\uD7A3]+\s[\uAC00-\uD7A3]+구\s[\uAC00-\uD7A3]+동)/);
+    const location = addrMatch ? addrMatch[1] : '';
+
+    // 카테고리 추출 (업체명 바로 뒤 줄)
+    const lines = info.split('\n').map(l => l.trim()).filter(Boolean);
+    const cats = ['한식', '양식', '일식', '중식', '카페', '퓨전', '분식', '치킨', '피자',
+      '퓨전음식', '고기', '해산물', '주점', '요리주점', '호프', '와인바', '이자카야',
+      '막걸리', '전통주점', '소고기구이', '돼지고기구이', '곱창', '족발', '보쌈',
+      '국밥', '냉면', '칼국수', '초밥', '라멘', '돈카츠', '짜장면', '짬뽕',
+      '베이커리', '디저트', '브런치', '샐러드', '뷔페', '패스트푸드', '샌드위치',
+      '태국음식', '베트남음식', '인도음식', '멕시코음식', '주류제조'];
+    let category = '';
+    for (let i = 0; i < Math.min(20, lines.length); i++) {
+      const f = cats.find(c => lines[i] === c || lines[i].includes(c));
+      if (f) { category = f; break; }
+    }
+
+    await browser.close();
+    res.json({ name, location, category, found: !!location });
+  } catch (e) {
+    await browser.close();
+    res.status(500).json({ error: '감지 실패: ' + e.message });
+  }
+});
+
 // ── 서버 시작 ──
 app.listen(PORT, () => {
   console.log(`🏢 공존공간 사업관리 도구가 시작되었습니다`);
