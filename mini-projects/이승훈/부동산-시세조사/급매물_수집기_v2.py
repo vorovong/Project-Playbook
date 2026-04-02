@@ -29,11 +29,9 @@ load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 DELAY = 5.0  # API 호출 간 딜레이 (초)
 
-# 서울/경기/인천 시도 코드
+# 조회 대상 시도 코드 (서울만)
 TARGET_SIDO = {
     "서울": "1100000000",
-    "경기": "4100000000",
-    "인천": "2800000000",
 }
 
 # 꼬마빌딩 유형 — PC API의 realEstateType
@@ -244,13 +242,14 @@ def get_sigungu_list(sido_code, log=print):
 
 
 def collect_all(sido_filter=None, log=print):
-    """서울/경기/인천 전체 수집 (시군구 단위로 조회하여 누락 방지)"""
+    """서울 전체 수집 (시군구 단위로 조회하여 누락 방지)"""
     if sido_filter:
         codes = {k: v for k, v in TARGET_SIDO.items() if k in sido_filter}
     else:
         codes = TARGET_SIDO
 
     all_buildings = []
+    all_skipped = []
 
     for sido_name, sido_code in codes.items():
         log(f"\n[{sido_name}] 시군구 목록 조회 중...")
@@ -270,7 +269,7 @@ def collect_all(sido_filter=None, log=print):
             if raw is None:
                 skipped.append(sg_name)
                 log(f"  {sg_name}: 429 스킵")
-                time.sleep(60)  # 스킵 후 1분 쉬고 다음 시군구
+                time.sleep(60)
                 continue
 
             count = 0
@@ -296,9 +295,10 @@ def collect_all(sido_filter=None, log=print):
         log(f"  → {sido_name} 합계: {sido_count}건")
         if skipped:
             log(f"  ⚠ 스킵된 지역: {', '.join(skipped)}")
+            all_skipped.extend(skipped)
 
     log(f"\n총 {len(all_buildings)}건 수집 완료")
-    return all_buildings
+    return all_buildings, all_skipped
 
 
 # ── 신규 매물 판별 ────────────────────────────────────
@@ -501,18 +501,29 @@ def main():
         if idx + 1 < len(sys.argv):
             RECENT_DAYS = int(sys.argv[idx + 1])
 
+    notify = "--notify" in sys.argv
+
     print("=" * 50)
     print("  소액 꼬마빌딩 급매물 수집기 v2")
-    print("  10억 이하 | 서울/경기/인천")
+    print("  10억 이하 | 서울")
     print("=" * 50)
     print()
 
-    buildings = collect_all(sido_filter=region_filter)
+    try:
+        buildings, skipped = collect_all(sido_filter=region_filter)
+    except Exception as e:
+        print(f"\n수집 중 오류: {e}")
+        if notify:
+            send_telegram(f"[오류] 급매물 수집 실패\n{e}")
+        return
 
     if not buildings:
-        print("\n매물이 없습니다.")
-        if "--notify" in sys.argv:
-            send_telegram("오늘 신규 꼬마빌딩 매물이 없습니다.")
+        msg = "오늘 신규 꼬마빌딩 매물이 없습니다."
+        if skipped:
+            msg += f"\n\n⚠ 429 차단으로 {len(skipped)}개 지역 수집 실패:\n{', '.join(skipped)}"
+        print(f"\n{msg}")
+        if notify:
+            send_telegram(msg)
         return
 
     first_run = is_first_run()
@@ -527,7 +538,7 @@ def main():
 
     os.makedirs(DB_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    region_label = region_filter[0] if region_filter else "서울경기인천"
+    region_label = region_filter[0] if region_filter else "서울"
 
     filename = os.path.join(DB_DIR, f"급매물_{region_label}_{timestamp}.xlsx")
     create_report(buildings, filename, title=region_label)
@@ -538,11 +549,16 @@ def main():
         create_report(new_buildings, new_filename, title=f"{region_label} 신규")
         print(f"신규 리포트 저장: {new_filename}")
 
-    if "--notify" in sys.argv:
+    if notify:
         if first_run:
-            send_telegram(f"[기준선 수집] 꼬마빌딩 {len(buildings)}건 등록 완료\n다음부터 신규 매물 알림이 시작됩니다.")
+            msg = f"[기준선 수집] 꼬마빌딩 {len(buildings)}건 등록 완료\n다음부터 신규 매물 알림이 시작됩니다."
+            if skipped:
+                msg += f"\n\n⚠ {len(skipped)}개 지역 429 스킵: {', '.join(skipped)}"
+            send_telegram(msg)
         else:
             notify_buildings(new_buildings, excel_path=filename)
+            if skipped:
+                send_telegram(f"⚠ {len(skipped)}개 지역 429 스킵: {', '.join(skipped)}")
         print("텔레그램 알림 발송 완료")
 
     print("\n완료!")
