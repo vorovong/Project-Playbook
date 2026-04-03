@@ -27,16 +27,16 @@ load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 # ── 설정 ──────────────────────────────────────────────
 
-DELAY = 5.0  # API 호출 간 딜레이 (초)
+DELAY = 8.0  # API 호출 간 딜레이 (초)
 
 # 조회 대상 시도 코드 (서울만)
 TARGET_SIDO = {
     "서울": "1100000000",
 }
 
-# 꼬마빌딩 유형 — PC API의 realEstateType
-# SG: 상가건물, SMS: 사무실건물, DDDG: 단독/다가구
-BUILDING_TYPES_PC = "SG:SMS:DDDG"
+# 꼬마빌딩 유형 — 모바일 API의 rletTpCd
+# D02: 상가, D03: 사무실, E04: 단독/다가구
+BUILDING_TYPES = "D02:D03:E04"
 
 # 매물 상세에서 필터링할 유형명 — 꼬마빌딩(건물 통째)만
 BUILDING_TYPE_NAMES = {"건물", "상가건물", "상가주택"}
@@ -69,8 +69,7 @@ SESSION.headers.update({
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/120.0.0.0 Safari/537.36"
     ),
-    "Referer": "https://new.land.naver.com/",
-    "Accept": "application/json",
+    "Referer": "https://m.land.naver.com/",
 })
 
 
@@ -79,8 +78,8 @@ def api_get(url, params, retry=0):
     try:
         resp = SESSION.get(url, params=params, timeout=15)
         if resp.status_code == 429:
-            if retry < 2:
-                wait_time = (retry + 1) * 30
+            if retry < 3:
+                wait_time = (retry + 1) * 60
                 print(f"  (429 - {wait_time}초 대기 후 재시도...)")
                 time.sleep(wait_time)
                 return api_get(url, params, retry + 1)
@@ -103,39 +102,52 @@ def wait():
     time.sleep(DELAY + random.uniform(0, 3))
 
 
-# ── 매물 수집 (PC API) ──────────────────────────────
+# ── 매물 수집 (모바일 API — 클러스터 방식) ──────────
 
-def fetch_articles_pc(cortar_no, page=1):
-    """new.land.naver.com API로 매물 목록 조회 (한 페이지)"""
+def fetch_clusters(lat, lon, cortar_no):
+    """m.land.naver.com 클러스터 목록 조회"""
+    offset = 0.06
     data = api_get(
-        "https://new.land.naver.com/api/articles",
+        "https://m.land.naver.com/cluster/clusterList",
         params={
+            "view": "atcl", "rletTpCd": BUILDING_TYPES, "tradTpCd": "A1",
+            "z": "13", "lat": str(lat), "lon": str(lon),
+            "btm": str(lat - offset), "lft": str(lon - offset),
+            "top": str(lat + offset), "rgt": str(lon + offset),
             "cortarNo": cortar_no,
-            "realEstateType": BUILDING_TYPES_PC,
-            "tradeType": "A1",
-            "priceMax": str(MAX_PRICE),
-            "page": str(page),
         },
     )
     if data is None:
-        return None, False  # 429 스킵
-    return data.get("articleList", []), data.get("isMoreData", False)
+        return None
+    return data.get("data", {}).get("ARTICLE", [])
 
 
-def fetch_all_articles_pc(cortar_no, log=print):
-    """한 지역의 전체 매물 수집 (페이징). 429 시 None 반환."""
+def fetch_articles_from_cluster(cluster, cortar_no):
+    """클러스터 내 매물 목록 조회 (페이징)"""
     all_articles = []
     page = 1
+    offset = 0.06
+    lat, lon = cluster["lat"], cluster["lon"]
 
     while True:
-        articles, has_more = fetch_articles_pc(cortar_no, page)
-        if articles is None:
-            return None  # 429 스킵 신호
-        if not articles:
+        data = api_get(
+            "https://m.land.naver.com/cluster/ajax/articleList",
+            params={
+                "rletTpCd": BUILDING_TYPES, "tradTpCd": "A1", "z": "13",
+                "lat": str(lat), "lon": str(lon),
+                "btm": str(lat - offset), "lft": str(lon - offset),
+                "top": str(lat + offset), "rgt": str(lon + offset),
+                "lgeo": cluster["lgeo"], "showR0": "N",
+                "page": str(page), "cortarNo": cortar_no,
+            },
+        )
+        if data is None:
+            return None
+        body = data.get("body", [])
+        if not body:
             break
-        all_articles.extend(articles)
-        log(f"    페이지 {page}: {len(articles)}건")
-        if not has_more:
+        all_articles.extend(body)
+        if not data.get("more", False):
             break
         page += 1
         wait()
@@ -143,15 +155,38 @@ def fetch_all_articles_pc(cortar_no, log=print):
     return all_articles
 
 
+def fetch_all_articles_mobile(lat, lon, cortar_no, log=print):
+    """한 지역의 전체 매물 수집 (클러스터 방식). 429 시 None 반환."""
+    clusters = fetch_clusters(lat, lon, cortar_no)
+    wait()
+    if clusters is None:
+        return None
+
+    all_articles = []
+    seen = set()
+    for cluster in clusters:
+        articles = fetch_articles_from_cluster(cluster, cortar_no)
+        if articles is None:
+            return None
+        for a in articles:
+            atcl_no = a.get("atclNo")
+            if atcl_no and atcl_no not in seen:
+                seen.add(atcl_no)
+                all_articles.append(a)
+        wait()
+
+    return all_articles
+
+
 def is_building_type(article):
-    """꼬마빌딩에 해당하는 매물인지 판별 (PC API 필드명)"""
-    tp = article.get("realEstateTypeName", "")
+    """꼬마빌딩에 해당하는 매물인지 판별"""
+    tp = article.get("rletTpNm", "")
     return tp in BUILDING_TYPE_NAMES
 
 
 def is_recent(article, days=1):
     """최근 N일 이내 등록된 매물인지 판별"""
-    cfm = article.get("confirmYmd", "") or article.get("articleConfirmYmd", "")
+    cfm = article.get("cfmYmd", "") or article.get("confirmYmd", "")
     if not cfm:
         return True  # 날짜 없으면 포함
 
@@ -170,44 +205,36 @@ def is_recent(article, days=1):
         return True
 
 
-def parse_article_pc(article):
-    """PC API 매물 데이터를 정리"""
-    prc_str = article.get("dealOrWarrantPrc", "0")
-    # "5억 3,000" 같은 형식 처리
-    prc_str = str(prc_str).replace(",", "").replace(" ", "")
+def parse_article_mobile(article):
+    """모바일 API 매물 데이터를 정리"""
     try:
-        if "억" in prc_str:
-            parts = prc_str.split("억")
-            억 = int(parts[0]) * 10000
-            만 = int(parts[1]) if parts[1] else 0
-            prc = 억 + 만
-        else:
-            prc = int(prc_str)
+        prc = int(article.get("prc", 0) or 0)
     except (ValueError, TypeError):
         prc = 0
 
     try:
-        area = float(article.get("area1", 0) or 0)
+        spc1 = float(article.get("spc1", 0) or 0)
     except (ValueError, TypeError):
-        area = 0
-    pyeong = round(area / 3.3058, 1) if area > 0 else 0
-
+        spc1 = 0
     try:
-        land_area = float(article.get("area2", 0) or 0)
+        spc2 = float(article.get("spc2", 0) or 0)
     except (ValueError, TypeError):
-        land_area = 0
+        spc2 = 0
+
+    area = spc1 if spc1 > 0 else spc2
+    pyeong = round(area / 3.3058, 1) if area > 0 else 0
+    land_area = spc2 if spc1 > 0 and spc2 > 0 else 0
     land_pyeong = round(land_area / 3.3058, 1) if land_area > 0 else 0
 
-    atcl_no = article.get("articleNo", "")
+    atcl_no = article.get("atclNo", "")
     link = f"https://fin.land.naver.com/articles/{atcl_no}" if atcl_no else ""
 
-    # 평단가 계산 (매매가 ÷ 건물면적)
     평단가_만원 = round(prc / pyeong) if pyeong > 0 and prc > 0 else 0
 
     return {
         "매물번호": atcl_no,
-        "매물명": article.get("articleName", ""),
-        "유형": article.get("realEstateTypeName", ""),
+        "매물명": article.get("atclNm", "") or article.get("bildNm", ""),
+        "유형": article.get("rletTpNm", ""),
         "매매가_만원": prc,
         "매매가_억": round(prc / 10000, 1) if prc >= 10000 else f"{prc}만",
         "건물면적_m2": round(area, 1),
@@ -215,11 +242,11 @@ def parse_article_pc(article):
         "토지면적_m2": round(land_area, 1),
         "토지면적_평": land_pyeong,
         "평단가_만원": 평단가_만원,
-        "층": article.get("floorInfo", ""),
-        "방향": article.get("direction", ""),
-        "설명": article.get("articleFeatureDesc", "") or "",
-        "중개사": article.get("realtorName", ""),
-        "확인일": article.get("confirmYmd", "") or article.get("articleConfirmYmd", ""),
+        "층": article.get("flrInfo", ""),
+        "방향": article.get("tagList", [""])[0] if article.get("tagList") else "",
+        "설명": article.get("atclFetrDesc", "") or "",
+        "중개사": article.get("rltrNm", ""),
+        "확인일": article.get("cfmYmd", "") or "",
         "링크": link,
     }
 
@@ -235,7 +262,7 @@ def get_sigungu_list(sido_code, log=print):
         resp.raise_for_status()
         data = resp.json()
         region_list = data.get("result", {}).get("list", [])
-        return [(r["CortarNm"], r["CortarNo"]) for r in region_list]
+        return [(r["CortarNm"], r["CortarNo"], float(r["MapYCrdn"]), float(r["MapXCrdn"])) for r in region_list]
     except Exception as e:
         log(f"  시군구 목록 조회 실패: {e}")
         return []
@@ -257,13 +284,13 @@ def collect_all(sido_filter=None, log=print):
         wait()
 
         if not sigungu_list:
-            log(f"  시군구 목록을 가져오지 못해 시도 단위로 조회합니다.")
-            sigungu_list = [("전체", sido_code)]
+            log(f"  시군구 목록을 가져오지 못해 건너뜁니다.")
+            continue
 
         sido_count = 0
         skipped = []
-        for sg_name, sg_code in sigungu_list:
-            raw = fetch_all_articles_pc(sg_code, log)
+        for sg_name, sg_code, sg_lat, sg_lon in sigungu_list:
+            raw = fetch_all_articles_mobile(sg_lat, sg_lon, sg_code, log)
             wait()
 
             if raw is None:
@@ -279,7 +306,7 @@ def collect_all(sido_filter=None, log=print):
                 if not is_recent(a, days=RECENT_DAYS):
                     continue
 
-                parsed = parse_article_pc(a)
+                parsed = parse_article_mobile(a)
                 if parsed["매매가_만원"] <= 0 or parsed["매매가_만원"] > MAX_PRICE:
                     continue
 
