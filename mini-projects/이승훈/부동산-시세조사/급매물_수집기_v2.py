@@ -27,7 +27,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 # ── 설정 ──────────────────────────────────────────────
 
-DELAY = 8.0  # API 호출 간 딜레이 (초)
+DELAY = 15.0  # API 호출 간 딜레이 (초)
 
 # 조회 대상 시도 코드 (서울만)
 TARGET_SIDO = {
@@ -78,8 +78,8 @@ def api_get(url, params, retry=0):
     try:
         resp = SESSION.get(url, params=params, timeout=15)
         if resp.status_code == 429:
-            if retry < 3:
-                wait_time = (retry + 1) * 60
+            if retry < 5:
+                wait_time = (retry + 1) * 120
                 print(f"  (429 - {wait_time}초 대기 후 재시도...)")
                 time.sleep(wait_time)
                 return api_get(url, params, retry + 1)
@@ -99,7 +99,7 @@ def api_get(url, params, retry=0):
 
 def wait():
     """랜덤 딜레이"""
-    time.sleep(DELAY + random.uniform(0, 3))
+    time.sleep(DELAY + random.uniform(2, 5))
 
 
 # ── 매물 수집 (모바일 API — 클러스터 방식) ──────────
@@ -295,9 +295,13 @@ def collect_all(sido_filter=None, log=print):
 
             if raw is None:
                 skipped.append(sg_name)
-                log(f"  {sg_name}: 429 스킵")
-                time.sleep(60)
-                continue
+                log(f"  {sg_name}: 429 - 180초 대기 후 재시도...")
+                time.sleep(180)
+                raw = fetch_all_articles_mobile(sg_lat, sg_lon, sg_code, log)
+                if raw is None:
+                    log(f"  {sg_name}: 재시도 실패, 스킵")
+                    time.sleep(180)
+                    continue
 
             count = 0
             for a in raw:
@@ -321,7 +325,7 @@ def collect_all(sido_filter=None, log=print):
 
         log(f"  → {sido_name} 합계: {sido_count}건")
         if skipped:
-            log(f"  ⚠ 스킵된 지역: {', '.join(skipped)}")
+            log(f"  [!] 스킵된 지역: {', '.join(skipped)}")
             all_skipped.extend(skipped)
 
     log(f"\n총 {len(all_buildings)}건 수집 완료")
@@ -547,7 +551,7 @@ def main():
     if not buildings:
         msg = "오늘 신규 꼬마빌딩 매물이 없습니다."
         if skipped:
-            msg += f"\n\n⚠ 429 차단으로 {len(skipped)}개 지역 수집 실패:\n{', '.join(skipped)}"
+            msg += f"\n\n[!] 429 차단으로 {len(skipped)}개 지역 수집 실패:\n{', '.join(skipped)}"
         print(f"\n{msg}")
         if notify:
             send_telegram(msg)
@@ -580,12 +584,12 @@ def main():
         if first_run:
             msg = f"[기준선 수집] 꼬마빌딩 {len(buildings)}건 등록 완료\n다음부터 신규 매물 알림이 시작됩니다."
             if skipped:
-                msg += f"\n\n⚠ {len(skipped)}개 지역 429 스킵: {', '.join(skipped)}"
+                msg += f"\n\n[!] {len(skipped)}개 지역 429 스킵: {', '.join(skipped)}"
             send_telegram(msg)
         else:
             notify_buildings(new_buildings, excel_path=filename)
             if skipped:
-                send_telegram(f"⚠ {len(skipped)}개 지역 429 스킵: {', '.join(skipped)}")
+                send_telegram(f"[!] {len(skipped)}개 지역 429 스킵: {', '.join(skipped)}")
         print("텔레그램 알림 발송 완료")
 
     print("\n완료!")
