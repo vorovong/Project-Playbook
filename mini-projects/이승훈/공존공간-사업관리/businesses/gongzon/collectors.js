@@ -98,12 +98,21 @@ async function fetchUtilities(config, month) {
   const water = bills['수도'] || [];
   const elecBasement = (bills['전기'] || []).filter(b => b.room.includes('지하'));
   const elecCommon = (bills['전기'] || []).filter(b => b.room.includes('공용'));
+  // 2026-04-07 추가: 지하/공용이 아닌 모든 전기 호실 = 공존 자기 부담분
+  // 예: 1층1호, 1층2호, 2층1호, 2층2호, 3층 (박승현 대표 거주)
+  // 현재는 합계에서 누락되어 매월 약 43만원 비용 과소 계상 → 박승현 대표 결정 후 sheets.js 합계 반영 예정
+  const elecGongzon = (bills['전기'] || []).filter(b =>
+    !b.room.includes('지하') && !b.room.includes('공용')
+  );
 
   const 가스_고지서 = gas.reduce((s, b) => s + b.amount, 0);
   const 수도_고지서 = water.reduce((s, b) => s + b.amount, 0);
   const 전기_지하_고지서 = elecBasement.reduce((s, b) => s + b.amount, 0);
   const 전기_지하_사용량 = elecBasement.reduce((s, b) => s + b.usage, 0);
   const 전기_공용_고지서 = elecCommon.reduce((s, b) => s + b.amount, 0);
+  const 전기_공존부담_고지서 = elecGongzon.reduce((s, b) => s + b.amount, 0);
+  const 전기_공존부담_사용량 = elecGongzon.reduce((s, b) => s + b.usage, 0);
+  const 전기_공존부담_상세 = elecGongzon.map(b => ({ 호실: b.room, 사용량: b.usage, 금액: b.amount }));
 
   // 태양광
   const [y, m] = month.split('-').map(Number);
@@ -132,6 +141,9 @@ async function fetchUtilities(config, month) {
     전기_지하_고지서, 전기_지하, 전기_공용_고지서, 전기_공용,
     태양광절감액, 태양광발전량, 단가, 전기_지하_사용량,
     prevMonth,
+    // 2026-04-07 추가: 공존 자기 부담 전기 (지하/공용 외 호실)
+    // 현재는 메인 합계 미반영. 박승현 대표 결정 후 반영 예정.
+    전기_공존부담_고지서, 전기_공존부담_사용량, 전기_공존부담_상세,
   };
 }
 
