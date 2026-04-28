@@ -34,6 +34,20 @@ TRADE_TYPES = {
     "월세": "B2",
 }
 
+# 매물 유형 모드 (rletTpCd는 네이버 부동산 코드)
+PROPERTY_MODES = {
+    "상가": {
+        "codes": ["D02"],  # 상가
+        "filter": {"상가", "사무실", "상가주택", "건물", "공장/창고", "토지"},
+    },
+    "주거": {
+        "codes": ["APT", "OPST", "VL", "DDDGG", "JWJT", "OR", "JT", "SGJT"],
+        # APT: 아파트, OPST: 오피스텔, VL: 빌라/연립, DDDGG: 단독/다가구,
+        # JWJT: 주상복합, OR: 원룸, JT: 전원주택, SGJT: 상가주택(주거포함)
+        "filter": {"아파트", "오피스텔", "빌라", "연립", "단독", "다가구", "주상복합", "원룸", "전원주택", "상가주택"},
+    },
+}
+
 DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
 
 
@@ -109,7 +123,9 @@ def fetch_clusters(lat, lon, cortar_no, trade_type, rlet_type="D02"):
         headers=HEADERS, timeout=10,
     )
     resp.raise_for_status()
-    return resp.json().get("data", {}).get("ARTICLE", [])
+    payload = resp.json() or {}
+    data = payload.get("data") or {}
+    return data.get("ARTICLE") or []
 
 
 def fetch_articles_from_cluster(cluster, cortar_no, trade_type, rlet_type="D02"):
@@ -132,8 +148,8 @@ def fetch_articles_from_cluster(cluster, cortar_no, trade_type, rlet_type="D02")
             headers=HEADERS, timeout=10,
         )
         resp.raise_for_status()
-        data = resp.json()
-        body = data.get("body", [])
+        data = resp.json() or {}
+        body = data.get("body") or []
         if not body:
             break
         all_articles.extend(body)
@@ -145,18 +161,31 @@ def fetch_articles_from_cluster(cluster, cortar_no, trade_type, rlet_type="D02")
     return all_articles
 
 
-def fetch_all_articles(lat, lon, cortar_no, trade_type, rlet_type="D02"):
-    clusters = fetch_clusters(lat, lon, cortar_no, trade_type, rlet_type)
-    time.sleep(DELAY)
+def fetch_all_articles(lat, lon, cortar_no, trade_type, rlet_types=("D02",), log=print):
+    """rlet_types: 단일 코드 또는 코드 리스트(주거 모드는 여러 코드 순회)."""
+    if isinstance(rlet_types, str):
+        rlet_types = (rlet_types,)
     all_articles = []
     seen = set()
-    for cluster in clusters:
-        for a in fetch_articles_from_cluster(cluster, cortar_no, trade_type, rlet_type):
-            atcl_no = a.get("atclNo")
-            if atcl_no and atcl_no not in seen:
-                seen.add(atcl_no)
-                all_articles.append(a)
+    for rlet_type in rlet_types:
+        try:
+            clusters = fetch_clusters(lat, lon, cortar_no, trade_type, rlet_type)
+        except Exception as e:
+            log(f"  [경고] {rlet_type} 클러스터 조회 실패: {e}")
+            continue
         time.sleep(DELAY)
+        for cluster in clusters:
+            try:
+                arts = fetch_articles_from_cluster(cluster, cortar_no, trade_type, rlet_type)
+            except Exception as e:
+                log(f"  [경고] {rlet_type} 매물 조회 실패: {e}")
+                continue
+            for a in arts:
+                atcl_no = a.get("atclNo")
+                if atcl_no and atcl_no not in seen:
+                    seen.add(atcl_no)
+                    all_articles.append(a)
+            time.sleep(DELAY)
     return all_articles
 
 
@@ -165,7 +194,7 @@ def fetch_all_articles(lat, lon, cortar_no, trade_type, rlet_type="D02"):
 COMMERCIAL_TYPES = {"상가", "사무실", "상가주택", "건물", "공장/창고", "토지"}
 
 
-def reverse_geocode_batch(articles, log=print):
+def reverse_geocode_batch(articles, log=print):  # noqa: 함수 분리 유지
     addr_cache = {}
     coords_needed = set()
     for a in articles:
@@ -199,12 +228,19 @@ def reverse_geocode_batch(articles, log=print):
     return addr_cache
 
 
-def parse_articles(articles, trade_type, log=print):
-    commercial = [a for a in articles if a.get("rletTpNm", "") in COMMERCIAL_TYPES]
-    addr_cache = reverse_geocode_batch(commercial, log)
+def parse_articles(articles, trade_type, type_filter=None, max_price=None, log=print):
+    """
+    type_filter: 매물유형(rletTpNm) 화이트리스트. None이면 전체 통과.
+    max_price: 매매(A1) 매매가(만원) 상한. 매매에만 적용.
+    """
+    if type_filter is None:
+        filtered = list(articles)
+    else:
+        filtered = [a for a in articles if a.get("rletTpNm", "") in type_filter]
+    addr_cache = reverse_geocode_batch(filtered, log)
 
     result = []
-    for a in commercial:
+    for a in filtered:
         try:
             spc1 = float(a.get("spc1", 0) or 0)
         except (ValueError, TypeError):
@@ -239,6 +275,9 @@ def parse_articles(articles, trade_type, log=print):
             prc = int(a.get("prc", 0) or 0)
             item["매매가_만원"] = prc
             item["평단가_만원"] = round(prc / pyeong) if pyeong > 0 else 0
+            # 매매가 상한 필터
+            if max_price is not None and prc > max_price:
+                continue
         elif trade_type == "B1":
             item["전세가_만원"] = int(a.get("prc", 0) or 0)
         else:
@@ -382,24 +421,40 @@ class App:
         ttk.Label(frm, text="지역명", font=("맑은 고딕", 11)).grid(row=0, column=0, sticky="w")
         self.entry = ttk.Entry(frm, width=30, font=("맑은 고딕", 11))
         self.entry.grid(row=0, column=1, columnspan=3, padx=(10, 0), pady=5)
-        self.entry.insert(0, "팔달구 장안동")
+        self.entry.insert(0, "장안구 영화동")
 
         # 거래 유형 체크박스
         ttk.Label(frm, text="거래유형", font=("맑은 고딕", 11)).grid(row=1, column=0, sticky="w", pady=(10, 0))
         self.chk_vars = {}
         for i, label in enumerate(TRADE_TYPES.keys()):
-            var = tk.BooleanVar(value=(label == "월세"))
+            var = tk.BooleanVar(value=(label == "매매"))
             chk = ttk.Checkbutton(frm, text=label, variable=var)
             chk.grid(row=1, column=i + 1, sticky="w", pady=(10, 0))
             self.chk_vars[label] = var
 
+        # 매물 모드 라디오 (상가 / 주거)
+        ttk.Label(frm, text="매물유형", font=("맑은 고딕", 11)).grid(row=2, column=0, sticky="w", pady=(10, 0))
+        self.mode_var = tk.StringVar(value="주거")
+        for i, mode in enumerate(PROPERTY_MODES.keys()):
+            rb = ttk.Radiobutton(frm, text=mode, value=mode, variable=self.mode_var)
+            rb.grid(row=2, column=i + 1, sticky="w", pady=(10, 0))
+
+        # 최대 매매가 입력 (만원, 매매 거래 한정)
+        ttk.Label(frm, text="최대 매매가", font=("맑은 고딕", 11)).grid(row=3, column=0, sticky="w", pady=(10, 0))
+        self.price_entry = ttk.Entry(frm, width=15, font=("맑은 고딕", 11))
+        self.price_entry.grid(row=3, column=1, sticky="w", padx=(10, 0), pady=(10, 0))
+        self.price_entry.insert(0, "100000")  # 10억 기본
+        ttk.Label(frm, text="만원 (비워두면 제한 없음)", font=("맑은 고딕", 9), foreground="#666").grid(
+            row=3, column=2, columnspan=2, sticky="w", pady=(10, 0)
+        )
+
         # 조회 버튼
         self.btn = ttk.Button(frm, text="조회", command=self.on_search)
-        self.btn.grid(row=2, column=0, columnspan=4, pady=(15, 5), sticky="ew")
+        self.btn.grid(row=4, column=0, columnspan=4, pady=(15, 5), sticky="ew")
 
         # 로그
         self.log_text = tk.Text(frm, width=55, height=15, font=("Consolas", 10), state="disabled")
-        self.log_text.grid(row=3, column=0, columnspan=4, pady=(5, 0))
+        self.log_text.grid(row=5, column=0, columnspan=4, pady=(5, 0))
 
         self.root.mainloop()
 
@@ -426,9 +481,19 @@ class App:
         self.log_text.delete("1.0", "end")
         self.log_text.configure(state="disabled")
 
-        threading.Thread(target=self.run_search, args=(query, selected), daemon=True).start()
+        mode = self.mode_var.get()
+        price_text = self.price_entry.get().strip()
+        max_price = None
+        if price_text:
+            try:
+                max_price = int(price_text.replace(",", ""))
+            except ValueError:
+                messagebox.showwarning("입력 오류", "최대 매매가는 숫자(만원)로 입력하세요.")
+                return
 
-    def run_search(self, query, selected_types):
+        threading.Thread(target=self.run_search, args=(query, selected, mode, max_price), daemon=True).start()
+
+    def run_search(self, query, selected_types, mode, max_price):
         try:
             query_parts = query.split()
             self.log(f"'{query}' 시세조사 시작\n")
@@ -456,13 +521,24 @@ class App:
             cortar_no = dong_info["cortarNo"]
 
             # 2. 선택된 유형별 매물 조회
+            mode_cfg = PROPERTY_MODES[mode]
+            rlet_codes = tuple(mode_cfg["codes"])
+            type_filter = mode_cfg["filter"]
+            self.log(f"  모드: {mode} ({len(rlet_codes)}개 유형)")
+            if max_price:
+                self.log(f"  최대 매매가: {max_price:,}만원\n")
+            else:
+                self.log("")
+
             datasets = {}
             step = 2
             for label in selected_types:
                 code = TRADE_TYPES[label]
                 self.log(f"[{step}] {label} 매물 조회 중...")
-                raw = fetch_all_articles(lat, lon, cortar_no, code)
-                data = parse_articles(raw, code, log=self.log)
+                raw = fetch_all_articles(lat, lon, cortar_no, code, rlet_codes, log=self.log)
+                # 매매에만 가격 필터 적용
+                price_cap = max_price if code == "A1" else None
+                data = parse_articles(raw, code, type_filter=type_filter, max_price=price_cap, log=self.log)
                 self.log(f"  -> {label} {len(data)}건\n")
                 datasets[label] = (code, data)
                 step += 1
