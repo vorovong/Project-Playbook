@@ -1,3 +1,9 @@
+> ⚠ V2 마이그레이션 (2026-05-11)
+> 박승현 자료는 `GIRIN-vault\10_raw\progress\박승현\` 으로 이전됨.
+> V1 원본은 `GIRIN-vault\99_archive\progress-v1-source\` 보존.
+> 이 폴더에는 김민호·이승훈 자료만 남음.
+
+---
 # progress/ — 진행 기록
 
 이 폴더에는 **미니 프로젝트의 일일 진행 기록**만 저장합니다.
